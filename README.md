@@ -14,6 +14,21 @@ cp .env.example .env
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/cardtracker bunx drizzle-kit generate --config packages/data/drizzle.config.ts
 ```
 
+## Docker Compose (Full Stack)
+
+```bash
+docker compose up --build -d
+docker compose ps
+curl http://localhost:3000/health
+curl http://localhost:3000/dashboard
+```
+
+Stop and clean up:
+
+```bash
+docker compose down
+```
+
 ## Run Commands
 
 ```bash
