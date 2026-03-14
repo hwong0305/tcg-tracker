@@ -45,7 +45,7 @@ Expected: FAIL.
 Run: `bun test packages/data/test/jobs-repo.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/data/src/repos/jobs-repo.ts packages/data/test/jobs-repo.test.ts
@@ -60,16 +60,16 @@ git commit -m "feat: persist job runs with drizzle repository"
 - Test: `packages/data/test/sets-repo.test.ts`
 - Test: `packages/data/test/cards-repo.test.ts`
 
-- [ ] **Step 1: Write failing tests for upsert idempotency and filter queries**
-- [ ] **Step 2: Run tests to verify failure**
+- [x] **Step 1: Write failing tests for upsert idempotency and filter queries**
+- [x] **Step 2: Run tests to verify failure**
 
 Run: `bun test packages/data/test/sets-repo.test.ts`
 Run: `bun test packages/data/test/cards-repo.test.ts`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement DB upserts using unique conflict keys from schema**
-- [ ] **Step 4: Implement filter/read methods used by API/jobs**
-- [ ] **Step 5: Run tests to verify pass**
+- [x] **Step 3: Implement DB upserts using unique conflict keys from schema**
+- [x] **Step 4: Implement filter/read methods used by API/jobs**
+- [x] **Step 5: Run tests to verify pass**
 
 Run: `bun test packages/data/test/sets-repo.test.ts`
 Run: `bun test packages/data/test/cards-repo.test.ts`

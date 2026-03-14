@@ -1,3 +1,7 @@
+import { and, eq, inArray } from "drizzle-orm";
+import { db } from "../client";
+import { cards, sets } from "../schema";
+
 export type CardRow = {
   id: string;
   sourceCardId: string;
@@ -14,7 +18,34 @@ export type CardRow = {
   printStatus?: "in-print" | "out-of-print";
 };
 
-const cardStore = new Map<string, CardRow>();
+const fixtureByCardId = new Map<string, string>();
+
+function toDbDecimal(value: number | null | undefined) {
+  if (value == null) return null;
+  return value.toFixed(2);
+}
+
+function mapCard(
+  row: typeof cards.$inferSelect,
+  extras?: {
+    tcgType?: string;
+    printStatus?: "in-print" | "out-of-print";
+  }
+): CardRow {
+  return {
+    id: row.id,
+    sourceCardId: row.sourceCardId,
+    setId: row.setId,
+    cardName: row.cardName ?? "",
+    rarity: row.rarity,
+    marketPrice: row.marketPrice == null ? null : Number(row.marketPrice),
+    isChase: row.isChase ?? false,
+    imageUrl: row.imageUrl,
+    fixtureKey: fixtureByCardId.get(row.id),
+    tcgType: extras?.tcgType,
+    printStatus: extras?.printStatus
+  };
+}
 
 export const cardsRepo = {
   async upsertMany(rows: Array<Omit<CardRow, "id">>) {
@@ -22,15 +53,27 @@ export const cardsRepo = {
     let updated = 0;
 
     for (const row of rows) {
-      const existing = Array.from(cardStore.values()).find(
-        (v) => v.setId === row.setId && v.sourceCardId === row.sourceCardId
-      );
-      if (existing) {
-        cardStore.set(existing.id, { ...existing, ...row });
+      const existing = await db
+        .select()
+        .from(cards)
+        .where(and(eq(cards.setId, row.setId), eq(cards.sourceCardId, row.sourceCardId)))
+        .limit(1);
+
+      const base = {
+        sourceCardId: row.sourceCardId,
+        setId: row.setId,
+        cardName: row.cardName,
+        rarity: row.rarity,
+        marketPrice: toDbDecimal(row.marketPrice),
+        isChase: row.isChase,
+        imageUrl: row.imageUrl
+      };
+
+      if (existing[0]) {
+        await db.update(cards).set(base).where(eq(cards.id, existing[0].id));
         updated += 1;
       } else {
-        const id = crypto.randomUUID();
-        cardStore.set(id, { id, ...row });
+        await db.insert(cards).values(base);
         created += 1;
       }
     }
@@ -40,32 +83,42 @@ export const cardsRepo = {
 
   async getBySetIds(setIds: string[]) {
     const map = new Map<string, CardRow[]>();
+    if (setIds.length === 0) return map;
+
+    const rows = await db.select().from(cards).where(inArray(cards.setId, setIds));
     for (const id of setIds) {
-      map.set(id, Array.from(cardStore.values()).filter((c) => c.setId === id));
+      map.set(
+        id,
+        rows.filter((row) => row.setId === id).map((row) => mapCard(row))
+      );
     }
     return map;
   },
 
   async updateChaseFlags(setId: string, chaseMap: Map<string, { isChase: boolean }>) {
-    for (const card of Array.from(cardStore.values())) {
-      if (card.setId !== setId) continue;
-      const next = chaseMap.get(card.id);
-      if (next) {
-        card.isChase = next.isChase;
-      }
+    for (const [cardId, status] of chaseMap.entries()) {
+      await db
+        .update(cards)
+        .set({ isChase: status.isChase })
+        .where(and(eq(cards.id, cardId), eq(cards.setId, setId)));
     }
   },
 
   async findBySetIds(setIds: string[]) {
-    return Array.from(cardStore.values()).filter((c) => setIds.includes(c.setId));
+    if (setIds.length === 0) return [];
+    const rows = await db.select().from(cards).where(inArray(cards.setId, setIds));
+    return rows.map((row) => mapCard(row));
   },
 
   async findByIds(ids: string[]) {
-    return Array.from(cardStore.values()).filter((c) => ids.includes(c.id));
+    if (ids.length === 0) return [];
+    const rows = await db.select().from(cards).where(inArray(cards.id, ids));
+    return rows.map((row) => mapCard(row));
   },
 
   async findTrackedTargets() {
-    return Array.from(cardStore.values()).map((c) => ({ id: c.id, sourceCardId: c.sourceCardId, cardName: c.cardName }));
+    const rows = await db.select().from(cards);
+    return rows.map((row) => ({ id: row.id, sourceCardId: row.sourceCardId, cardName: row.cardName ?? "" }));
   },
 
   async findFiltered(filters: {
@@ -75,19 +128,59 @@ export const cardsRepo = {
     tcgType?: string;
     printStatus?: string;
   }) {
-    return Array.from(cardStore.values()).filter((card) => {
-      if (filters.setId && filters.setId !== "all" && card.setId !== filters.setId) return false;
-      if (filters.rarity && filters.rarity !== "all" && card.rarity !== filters.rarity) return false;
-      if (filters.chaseOnly && !card.isChase) return false;
-      if (filters.tcgType && filters.tcgType !== "all" && card.tcgType !== filters.tcgType) return false;
-      if (filters.printStatus && filters.printStatus !== "all" && card.printStatus !== filters.printStatus) return false;
-      return true;
-    });
+    const rows = await db
+      .select({ card: cards, set: sets })
+      .from(cards)
+      .leftJoin(sets, eq(cards.setId, sets.id));
+
+    return rows
+      .filter(({ card, set }) => {
+        if (filters.setId && filters.setId !== "all" && card.setId !== filters.setId) return false;
+        if (filters.rarity && filters.rarity !== "all" && card.rarity !== filters.rarity) return false;
+        if (filters.chaseOnly && !card.isChase) return false;
+        if (filters.tcgType && filters.tcgType !== "all" && set?.tcgType !== filters.tcgType) return false;
+        if (filters.printStatus === "in-print" && set?.isOutOfPrint) return false;
+        if (filters.printStatus === "out-of-print" && !set?.isOutOfPrint) return false;
+        return true;
+      })
+      .map(({ card, set }) =>
+        mapCard(card, {
+          tcgType: set?.tcgType,
+          printStatus: set?.isOutOfPrint ? "out-of-print" : "in-print"
+        })
+      );
   },
 
   async seed(rows: CardRow[]) {
     for (const row of rows) {
-      cardStore.set(row.id, row);
+      await db
+        .insert(cards)
+        .values({
+          id: row.id,
+          sourceCardId: row.sourceCardId,
+          setId: row.setId,
+          cardName: row.cardName,
+          rarity: row.rarity,
+          marketPrice: toDbDecimal(row.marketPrice),
+          isChase: row.isChase,
+          imageUrl: row.imageUrl
+        })
+        .onConflictDoUpdate({
+          target: cards.id,
+          set: {
+            sourceCardId: row.sourceCardId,
+            setId: row.setId,
+            cardName: row.cardName,
+            rarity: row.rarity,
+            marketPrice: toDbDecimal(row.marketPrice),
+            isChase: row.isChase,
+            imageUrl: row.imageUrl
+          }
+        });
+
+      if (row.fixtureKey) {
+        fixtureByCardId.set(row.id, row.fixtureKey);
+      }
     }
   }
 };

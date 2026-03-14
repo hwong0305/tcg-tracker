@@ -1,3 +1,7 @@
+import { and, eq, inArray } from "drizzle-orm";
+import { db } from "../client";
+import { sets } from "../schema";
+
 export type SetRow = {
   id: string;
   tcgType: string;
@@ -10,7 +14,26 @@ export type SetRow = {
   fixtureKey?: string;
 };
 
-const setStore = new Map<string, SetRow>();
+const fixtureBySetId = new Map<string, string>();
+
+function toDbDecimal(value: number | null | undefined) {
+  if (value == null) return null;
+  return value.toFixed(2);
+}
+
+function mapSet(row: typeof sets.$inferSelect): SetRow {
+  return {
+    id: row.id,
+    tcgType: row.tcgType,
+    sourceSetId: row.sourceSetId,
+    setName: row.setName,
+    releaseDate: row.releaseDate,
+    currentBoxPrice: row.currentBoxPrice == null ? null : Number(row.currentBoxPrice),
+    msrpPackPrice: row.msrpPackPrice == null ? null : Number(row.msrpPackPrice),
+    isOutOfPrint: row.isOutOfPrint ?? false,
+    fixtureKey: fixtureBySetId.get(row.id)
+  };
+}
 
 export const setsRepo = {
   async upsertMany(rows: Array<Omit<SetRow, "id">>) {
@@ -19,21 +42,33 @@ export const setsRepo = {
     const outRows: SetRow[] = [];
 
     for (const row of rows) {
-      const key = `${row.tcgType}:${row.sourceSetId}`;
-      const existing = Array.from(setStore.values()).find((v) => `${v.tcgType}:${v.sourceSetId}` === key);
+      const existing = await db
+        .select()
+        .from(sets)
+        .where(and(eq(sets.tcgType, row.tcgType), eq(sets.sourceSetId, row.sourceSetId)))
+        .limit(1);
 
-      if (existing) {
-        setStore.set(existing.id, { ...existing, ...row });
-        outRows.push(setStore.get(existing.id)!);
+      const base = {
+        tcgType: row.tcgType,
+        sourceSetId: row.sourceSetId,
+        setName: row.setName,
+        releaseDate: row.releaseDate,
+        currentBoxPrice: toDbDecimal(row.currentBoxPrice),
+        msrpPackPrice: toDbDecimal(row.msrpPackPrice),
+        isOutOfPrint: row.isOutOfPrint
+      };
+
+      if (existing[0]) {
+        const updatedRows = await db
+          .update(sets)
+          .set(base)
+          .where(eq(sets.id, existing[0].id))
+          .returning();
+        outRows.push(mapSet(updatedRows[0]));
         updated += 1;
       } else {
-        const id = crypto.randomUUID();
-        const next: SetRow = {
-          id,
-          ...row
-        };
-        setStore.set(id, next);
-        outRows.push(next);
+        const inserted = await db.insert(sets).values(base).returning();
+        outRows.push(mapSet(inserted[0]));
         created += 1;
       }
     }
@@ -42,15 +77,13 @@ export const setsRepo = {
   },
 
   async updatePrintStatus(id: string, isOutOfPrint: boolean) {
-    const row = setStore.get(id);
-    if (!row) return;
-    row.isOutOfPrint = isOutOfPrint;
+    await db.update(sets).set({ isOutOfPrint }).where(eq(sets.id, id));
   },
 
   async getByIds(ids: string[]) {
-    return ids
-      .map((id) => setStore.get(id))
-      .filter((v): v is SetRow => Boolean(v));
+    if (ids.length === 0) return [];
+    const rows = await db.select().from(sets).where(inArray(sets.id, ids));
+    return rows.map(mapSet);
   },
 
   async findFiltered(filters: {
@@ -58,18 +91,58 @@ export const setsRepo = {
     tcgType?: string;
     setId?: string;
   }) {
-    return Array.from(setStore.values()).filter((set) => {
-      if (filters.tcgType && filters.tcgType !== "all" && set.tcgType !== filters.tcgType) return false;
-      if (filters.setId && filters.setId !== "all" && set.id !== filters.setId) return false;
-      if (filters.printStatus === "in-print" && set.isOutOfPrint) return false;
-      if (filters.printStatus === "out-of-print" && !set.isOutOfPrint) return false;
-      return true;
-    });
+    const conditions = [] as Array<any>;
+
+    if (filters.tcgType && filters.tcgType !== "all") {
+      conditions.push(eq(sets.tcgType, filters.tcgType));
+    }
+    if (filters.setId && filters.setId !== "all") {
+      conditions.push(eq(sets.id, filters.setId));
+    }
+    if (filters.printStatus === "in-print") {
+      conditions.push(eq(sets.isOutOfPrint, false));
+    }
+    if (filters.printStatus === "out-of-print") {
+      conditions.push(eq(sets.isOutOfPrint, true));
+    }
+
+    const rows = conditions.length
+      ? await db.select().from(sets).where(and(...conditions))
+      : await db.select().from(sets);
+
+    return rows.map(mapSet);
   },
 
   async seed(rows: SetRow[]) {
     for (const row of rows) {
-      setStore.set(row.id, row);
+      await db
+        .insert(sets)
+        .values({
+          id: row.id,
+          tcgType: row.tcgType,
+          sourceSetId: row.sourceSetId,
+          setName: row.setName,
+          releaseDate: row.releaseDate,
+          currentBoxPrice: toDbDecimal(row.currentBoxPrice),
+          msrpPackPrice: toDbDecimal(row.msrpPackPrice),
+          isOutOfPrint: row.isOutOfPrint
+        })
+        .onConflictDoUpdate({
+          target: sets.id,
+          set: {
+            tcgType: row.tcgType,
+            sourceSetId: row.sourceSetId,
+            setName: row.setName,
+            releaseDate: row.releaseDate,
+            currentBoxPrice: toDbDecimal(row.currentBoxPrice),
+            msrpPackPrice: toDbDecimal(row.msrpPackPrice),
+            isOutOfPrint: row.isOutOfPrint
+          }
+        });
+
+      if (row.fixtureKey) {
+        fixtureBySetId.set(row.id, row.fixtureKey);
+      }
     }
   }
 };
