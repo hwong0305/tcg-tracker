@@ -16,6 +16,7 @@ export type CardRow = {
   fixtureKey?: string;
   tcgType?: string;
   printStatus?: "in-print" | "out-of-print";
+  setName?: string;
 };
 
 const fixtureByCardId = new Map<string, string>();
@@ -31,6 +32,7 @@ function mapCard(
   extras?: {
     tcgType?: string;
     printStatus?: "in-print" | "out-of-print";
+    setName?: string;
   }
 ): CardRow {
   return {
@@ -44,7 +46,8 @@ function mapCard(
     imageUrl: row.imageUrl,
     fixtureKey: fixtureByCardId.get(row.id),
     tcgType: extras?.tcgType,
-    printStatus: extras?.printStatus
+    printStatus: extras?.printStatus,
+    setName: extras?.setName
   };
 }
 
@@ -149,7 +152,8 @@ export const cardsRepo = {
       .map(({ card, set }) =>
         mapCard(card, {
           tcgType: set?.tcgType,
-          printStatus: set?.isOutOfPrint ? "out-of-print" : "in-print"
+          printStatus: set?.isOutOfPrint ? "out-of-print" : "in-print",
+          setName: set?.setName
         })
       );
   },

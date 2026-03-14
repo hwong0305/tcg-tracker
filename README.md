@@ -75,6 +75,14 @@ curl http://localhost:3000/jobs/<jobId>
 - Other filters: `printStatus`, `tcgType`, `rarity`, `chaseOnly`
 - Presets: `Store Hunter` and `Vault`
 
+## Card Ingest Source
+
+The ingest job fetches all cards in a single call from `GET ${ONEPIECE_API_BASE_URL}/api/allSetCards/` (default base: `https://www.optcgapi.com`). Sets are derived from the flat card rows and upserted automatically. Invalid rows are skipped; the job only fails if every row is invalid.
+
+## Theme Support
+
+The dashboard UI supports `system`, `light`, and `dark` themes. The user's choice is stored in `localStorage` (`cardtracker-theme`). In `system` mode the UI follows the OS `prefers-color-scheme` and reacts to live changes. Invalid stored values fall back to `system`.
+
 ## MVP Limits
 
 - One Piece ingestion only in phase 1

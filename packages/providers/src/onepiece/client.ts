@@ -41,3 +41,18 @@ export async function fetchOnePieceCards(baseUrl: string, sourceSetId: string) {
     throw mapOnePieceError(error instanceof Error ? error : new Error(String(error)), "card");
   }
 }
+
+export async function fetchOnePieceAllSetCards(baseUrl: string) {
+  try {
+    const res = await fetch(`${baseUrl}/api/allSetCards/`);
+    if (!res.ok) throw mapOnePieceError(new Error(`HTTP_${res.status}`), "card");
+    try {
+      return await res.json();
+    } catch {
+      throw mapOnePieceError(new Error("INVALID_JSON"), "card");
+    }
+  } catch (error) {
+    if (isProviderError(error)) throw error;
+    throw mapOnePieceError(error instanceof Error ? error : new Error(String(error)), "card");
+  }
+}

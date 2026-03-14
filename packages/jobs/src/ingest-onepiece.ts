@@ -1,7 +1,7 @@
 import { cardsRepo } from "../../data/src/repos/cards-repo";
 import { jobsRepo } from "../../data/src/repos/jobs-repo";
 import { setsRepo } from "../../data/src/repos/sets-repo";
-import { fetchOnePieceCards, fetchOnePieceSets, normalizeCard, normalizeSet } from "../../providers/src";
+import { fetchOnePieceAllSetCards, normalizeAllSetCardRow } from "../../providers/src";
 
 type IngestInput = { setIds?: string[]; devSeed?: boolean; forceFailure?: boolean; onePieceBaseUrl?: string };
 
@@ -80,64 +80,81 @@ export async function runIngestOnePieceJob(input: IngestInput, options?: { jobId
       return { status: "completed" as const, stats };
     }
 
-    const rawSets = await fetchOnePieceSets(input.onePieceBaseUrl || process.env.ONEPIECE_API_BASE_URL || "https://optcg-api.com");
-    const normalizedSets = (rawSets as any[])
-      .map(normalizeSet)
-      .filter((s) => !input.setIds || input.setIds.includes(s.sourceSetId))
-      .map((s) => ({
-        tcgType: s.tcgType,
-        sourceSetId: s.sourceSetId,
-        setName: s.setName,
-        releaseDate: s.releaseDate,
-        currentBoxPrice: null,
-        msrpPackPrice: 4.49,
-        isOutOfPrint: false
-      }));
+    const baseUrl = input.onePieceBaseUrl || process.env.ONEPIECE_API_BASE_URL || "https://optcg-api.com";
+    const rawRows = await fetchOnePieceAllSetCards(baseUrl);
 
-    const setUpsert = await setsRepo.upsertMany(normalizedSets);
+    const validRows: ReturnType<typeof normalizeAllSetCardRow>[] = [];
+    let invalidRowCount = 0;
+
+    for (const row of rawRows as any[]) {
+      try {
+        const normalized = normalizeAllSetCardRow(row);
+        if (!input.setIds || input.setIds.includes(normalized.sourceSetId)) {
+          validRows.push(normalized);
+        }
+      } catch {
+        invalidRowCount++;
+      }
+    }
+
+    if (validRows.length === 0) {
+      throw Object.assign(new Error("INVALID_PAYLOAD"), { code: "INVALID_PAYLOAD", entity: "card" });
+    }
+
+    const uniqueSets = Array.from(new Map(validRows.map(r => [r.sourceSetId, { sourceSetId: r.sourceSetId, setName: r.setName }])).values());
+
+    const setUpsert = await setsRepo.upsertMany(uniqueSets.map(s => ({
+      tcgType: "OnePiece" as const,
+      sourceSetId: s.sourceSetId,
+      setName: s.setName,
+      releaseDate: null,
+      currentBoxPrice: null,
+      msrpPackPrice: 4.49,
+      isOutOfPrint: false
+    })));
+
     const setIdBySource = new Map(setUpsert.rows.map((row: { sourceSetId: string; id: string }) => [row.sourceSetId, row.id]));
 
-    const cardStats = { createdCards: 0, updatedCards: 0 };
-    for (const set of normalizedSets) {
-      const rawCards = await fetchOnePieceCards(
-        input.onePieceBaseUrl || process.env.ONEPIECE_API_BASE_URL || "https://optcg-api.com",
-        set.sourceSetId
-      );
-      const persistedSetId = setIdBySource.get(set.sourceSetId);
-      if (!persistedSetId) {
-        continue;
-      }
-      const normalizedCards = (rawCards as any[]).map((card: any) => {
-        const normalized = normalizeCard(card, persistedSetId);
+    const cardsToUpsert = validRows
+      .map(row => {
+        const persistedSetId = setIdBySource.get(row.sourceSetId);
+        if (!persistedSetId) return null;
         return {
-          sourceCardId: normalized.sourceCardId,
-          setId: normalized.setId,
-          cardName: normalized.cardName,
-          rarity: normalized.rarity,
-          marketPrice: null,
+          sourceCardId: row.sourceCardId,
+          setId: persistedSetId,
+          cardName: row.cardName,
+          rarity: row.rarity,
+          marketPrice: row.marketPrice,
           isChase: false,
-          imageUrl: normalized.imageUrl,
-          tcgType: "OnePiece",
+          imageUrl: row.imageUrl,
+          tcgType: "OnePiece" as const,
           printStatus: "in-print" as const
         };
-      });
-      const stats = await cardsRepo.upsertMany(normalizedCards);
-      cardStats.createdCards += stats.created;
-      cardStats.updatedCards += stats.updated;
-    }
+      })
+      .filter((c): c is NonNullable<typeof c> => c !== null);
+
+    const cardStats = cardsToUpsert.length > 0
+      ? await cardsRepo.upsertMany(cardsToUpsert)
+      : { created: 0, updated: 0, rows: [] };
 
     const stats = {
       createdSets: setUpsert.created,
       updatedSets: setUpsert.updated,
-      createdCards: cardStats.createdCards,
-      updatedCards: cardStats.updatedCards
+      createdCards: cardStats.created,
+      updatedCards: cardStats.updated,
+      invalidRows: invalidRowCount
     };
     await jobsRepo.finalize(run.id, { status: "completed", statsJson: stats, finishedAt: new Date() });
     return { status: "completed" as const, stats };
   } catch (error) {
+    const errorData = error instanceof Error ? error : new Error(String(error));
     await jobsRepo.finalize(run.id, {
       status: "failed",
-      errorsJson: [{ message: error instanceof Error ? error.message : String(error) }],
+      errorsJson: [{ 
+        message: errorData.message,
+        code: (error as any)?.code || "UNKNOWN",
+        entity: (error as any)?.entity || "card"
+      }],
       finishedAt: new Date()
     });
     throw error;

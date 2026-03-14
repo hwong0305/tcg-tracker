@@ -36,6 +36,40 @@ describe("API contracts", () => {
     expect(typeof body.meta.generatedAt).toBe("string");
   });
 
+  test("GET /dashboard includes additive allsetcards card fields", async () => {
+    const ingestRes = await app.handle(
+      new Request("http://localhost/jobs/ingest/onepiece", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ devSeed: true })
+      })
+    );
+    expect(ingestRes.status).toBe(202);
+    const { jobId } = await ingestRes.json();
+
+    let completed = false;
+    for (let i = 0; i < 10; i += 1) {
+      const statusRes = await app.handle(new Request(`http://localhost/jobs/${jobId}`));
+      const statusBody = await statusRes.json();
+      if (statusBody.status === "completed") {
+        completed = true;
+        break;
+      }
+      await Bun.sleep(10);
+    }
+    expect(completed).toBe(true);
+
+    const res = await app.handle(new Request("http://localhost/dashboard"));
+    const body = await res.json();
+    expect(res.status).toBe(200);
+    expect(body.cards.length).toBeGreaterThan(0);
+    const first = body.cards[0];
+    expect(typeof first.sourceCardId).toBe("string");
+    expect(typeof first.setName).toBe("string");
+    expect(first.marketPrice === null || typeof first.marketPrice === "number").toBe(true);
+    expect(first.imageUrl === null || typeof first.imageUrl === "string").toBe(true);
+  });
+
   test("POST /jobs/ingest/onepiece queues job", async () => {
     const res = await app.handle(new Request("http://localhost/jobs/ingest/onepiece", { method: "POST" }));
     const body = await res.json();

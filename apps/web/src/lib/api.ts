@@ -1,11 +1,15 @@
 export type DashboardCard = {
   id: string;
+  sourceCardId: string;
   cardName: string;
-  printStatus: "in-print" | "out-of-print";
-  tcgType: string;
   setId: string;
-  rarity: string;
+  setName: string;
+  rarity: string | null;
+  marketPrice: number | null;
+  imageUrl: string | null;
   isChase: boolean;
+  tcgType: string;
+  printStatus: "in-print" | "out-of-print";
 };
 
 export type DashboardData = {

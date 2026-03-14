@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { FilterBar, type FilterState } from "./components/FilterBar";
 import { SetList } from "./components/SetList";
+import { ThemeToggle } from "./components/ThemeToggle";
 import { fetchDashboard, type DashboardData, type DashboardCard } from "./lib/api";
 
 const initialFilters: FilterState = {
@@ -44,7 +45,7 @@ export default function App() {
 
   const tcgOptions = Array.from(new Set(data.cards.map((c) => c.tcgType)));
   const setOptions = Array.from(new Set(data.cards.map((c) => c.setId)));
-  const rarityOptions = Array.from(new Set(data.cards.map((c) => c.rarity)));
+  const rarityOptions = Array.from(new Set(data.cards.map((c) => c.rarity).filter((r): r is string => r != null)));
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div role="alert">{error}</div>;
@@ -52,8 +53,13 @@ export default function App() {
   return (
     <main className="app-shell">
       <section className="dashboard-hero">
-        <p className="eyebrow">Collection Console</p>
-        <h1>CardTracker Dashboard</h1>
+        <div className="hero-header">
+          <div>
+            <p className="eyebrow">Collection Console</p>
+            <h1>CardTracker Dashboard</h1>
+          </div>
+          <ThemeToggle />
+        </div>
         <p>Filter in-print releases, spot chase cards, and pivot between trading card segments quickly.</p>
         <div className="hero-metrics">
           <div>
@@ -75,7 +81,7 @@ export default function App() {
         setOptions={setOptions}
         rarityOptions={rarityOptions}
       />
-      <SetList cards={filtered.map((c: DashboardCard) => ({ id: c.id, cardName: c.cardName, isChase: c.isChase }))} />
+      <SetList cards={filtered} />
     </main>
   );
 }
