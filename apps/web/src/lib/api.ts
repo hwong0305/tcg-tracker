@@ -13,7 +13,7 @@ export type DashboardCard = {
 };
 
 export type DashboardData = {
-  sets: Array<{ id: string; setName: string }>;
+  sets: Array<{ id: string; setName: string; sourceSetId: string }>;
   cards: DashboardCard[];
 };
 

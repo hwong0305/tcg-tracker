@@ -48,7 +48,9 @@ export default function App() {
   };
 
   const tcgOptions = Array.from(new Set(data.cards.map((c) => c.tcgType)));
-  const setOptions = Array.from(new Map(data.sets.map((s) => [s.id, s])).values()).map((s) => ({ id: s.id, name: s.setName }));
+  const setOptions = Array.from(new Map(data.sets.map((s) => [s.id, s])).values())
+    .sort((a, b) => a.setName.localeCompare(b.setName))
+    .map((s) => ({ id: s.id, name: `${s.setName} (${s.sourceSetId})` }));
   const rarityOptions = Array.from(new Set(data.cards.map((c) => c.rarity).filter((r): r is string => r != null)));
 
   if (loading) return <div>Loading...</div>;
