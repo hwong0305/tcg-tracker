@@ -23,6 +23,8 @@ curl http://localhost:3000/health
 curl http://localhost:3000/dashboard
 ```
 
+The API container runs `drizzle-kit push` on startup, so schema setup is automatic when using compose.
+
 Stop and clean up:
 
 ```bash

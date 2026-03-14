@@ -106,7 +106,7 @@ Expected: FAIL.
 Run: `bun test apps/api/test/jobs-routes.test.ts`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/api/src/services/jobs-api.ts packages/jobs/src/ingest-onepiece.ts packages/jobs/src/scrape-prices.ts packages/jobs/src/recompute-flags.ts apps/api/test/jobs-routes.test.ts
@@ -124,20 +124,20 @@ git commit -m "fix: harden async job lifecycle persistence and error handling"
 - Test: `apps/api/test/docker-compose.test.ts`
 - Modify: `README.md`
 
-- [ ] **Step 1: Add failing compose test for migration-on-start command presence**
-- [ ] **Step 2: Run test to verify failure**
+- [x] **Step 1: Add failing compose test for migration-on-start command presence**
+- [x] **Step 2: Run test to verify failure**
 
 Run: `bun test apps/api/test/docker-compose.test.ts`
 Expected: FAIL.
 
-- [ ] **Step 3: Add API entrypoint script to wait for DB and run `drizzle-kit push` before `dev:api`**
-- [ ] **Step 4: Wire entrypoint in Dockerfile/compose and update README command docs**
-- [ ] **Step 5: Run test to verify pass**
+- [x] **Step 3: Add API entrypoint script to wait for DB and run `drizzle-kit push` before `dev:api`**
+- [x] **Step 4: Wire entrypoint in Dockerfile/compose and update README command docs**
+- [x] **Step 5: Run test to verify pass**
 
 Run: `bun test apps/api/test/docker-compose.test.ts`
 Expected: PASS.
 
-- [ ] **Step 6: Verify manually with compose**
+- [x] **Step 6: Verify manually with compose**
 
 Run: `docker compose up --build -d && docker compose ps`
 Expected: healthy `postgres`, running `api`/`web` without manual migration command.

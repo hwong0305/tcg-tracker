@@ -2,4 +2,7 @@ FROM oven/bun:1.3
 
 WORKDIR /app
 
-CMD ["sh", "-lc", "bun install && bun run dev:api"]
+COPY scripts/api-entrypoint.sh /usr/local/bin/api-entrypoint.sh
+RUN chmod +x /usr/local/bin/api-entrypoint.sh
+
+CMD ["sh", "/usr/local/bin/api-entrypoint.sh"]
