@@ -6,8 +6,8 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:api": "bun --cwd apps/api run dev",
-    "dev:web": "bun --cwd apps/web run dev",
+    "dev:api": "bun run --cwd apps/api dev",
+    "dev:web": "bun run --cwd apps/web dev",
     "test": "bun test apps/api packages",
     "jobs:ingest": "bun run packages/jobs/src/ingest-onepiece.ts",
     "jobs:scrape": "bun run packages/jobs/src/scrape-prices.ts",
