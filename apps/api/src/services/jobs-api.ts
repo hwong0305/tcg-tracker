@@ -2,6 +2,7 @@ import { cardsRepo } from "../../../../packages/data/src/repos/cards-repo";
 import { jobsRepo } from "../../../../packages/data/src/repos/jobs-repo";
 import { resolveTargetsUnion } from "../../../../packages/jobs/src/resolve-targets";
 import { runIngestOnePieceJob } from "../../../../packages/jobs/src/ingest-onepiece";
+import { runIngestLimitlessJob } from "../../../../packages/jobs/src/ingest-limitless";
 import { runRecomputeFlagsJob } from "../../../../packages/jobs/src/recompute-flags";
 import { runScrapePricesJob } from "../../../../packages/jobs/src/scrape-prices";
 
@@ -24,6 +25,18 @@ export const jobsApi = {
 
     queueMicrotask(() => {
       void runIngestOnePieceJob(payload ?? {}, { jobId: run.id }).catch(() => {
+        // Job failure state is persisted by job runner.
+      });
+    });
+
+    return run.id;
+  },
+
+  async queueIngestLimitless(payload: any) {
+    const run = await jobsRepo.create({ type: "ingest-limitless", status: "queued", requestPayloadJson: payload });
+
+    queueMicrotask(() => {
+      void runIngestLimitlessJob(payload ?? {}, { jobId: run.id }).catch(() => {
         // Job failure state is persisted by job runner.
       });
     });

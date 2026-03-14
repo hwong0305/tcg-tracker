@@ -7,6 +7,11 @@ export function registerJobRoutes(app: Elysia) {
     return new Response(JSON.stringify({ jobId, status: "queued" }), { status: 202 });
   });
 
+  app.post("/jobs/ingest/limitless", async ({ body }) => {
+    const jobId = await jobsApi.queueIngestLimitless(body ?? {});
+    return new Response(JSON.stringify({ jobId, status: "queued" }), { status: 202 });
+  });
+
   app.post("/jobs/scrape/prices", async ({ body }) => {
     const queued = await jobsApi.queueScrape((body ?? {}) as any);
     return new Response(JSON.stringify({ jobId: queued.jobId, status: "queued", targetCount: queued.targetCount }), {
