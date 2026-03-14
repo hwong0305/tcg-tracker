@@ -61,6 +61,8 @@ GitHub Actions runs:
 ```bash
 curl -X POST http://localhost:3000/jobs/ingest/onepiece
 curl -X POST http://localhost:3000/jobs/ingest/onepiece -H "content-type: application/json" -d '{"devSeed":true}'
+curl -X POST http://localhost:3000/jobs/ingest/limitless
+curl -X POST http://localhost:3000/jobs/ingest/limitless -H "content-type: application/json" -d '{"setIds":["OP01","OP02"]}'
 curl -X POST http://localhost:3000/jobs/scrape/prices -H "content-type: application/json" -d '{"setIds":["s1"]}'
 curl -X POST http://localhost:3000/jobs/recompute/flags
 curl http://localhost:3000/jobs/<jobId>
@@ -83,6 +85,19 @@ The ingest job fetches cards from three upstream endpoints in sequence:
 3. `GET ${ONEPIECE_API_BASE_URL}/api/allPromos/` (promo cards)
 
 Default base URL: `https://www.optcgapi.com`. Rows are deduplicated by `card_set_id` — when the same card appears in multiple sources, the row with the latest `date_scraped` is kept. Ingest stats report `totalFetched`, `duplicatesRemoved`, and `invalidRows`.
+
+## LimitlessTCG Augmentation
+
+The `ingest-limitless` job scrapes [limitlesstcg.com](https://onepiece.limitlesstcg.com) to augment card data:
+
+- **Sets**: Fetches release dates, USD/EUR box prices from the sets table
+- **Cards**: Fetches card images and parallel variants (Alternate Art, Manga Art, etc.)
+
+The job fetches from:
+1. `https://onepiece.limitlesstcg.com/cards` — set list with dates and prices
+2. `https://onepiece.limitlesstcg.com/cards/{set-slug}` — per-set card data
+
+Rate-limited at 500ms between requests. Optional `setIds` filter to scrape specific sets only.
 
 ## Theme Support
 
