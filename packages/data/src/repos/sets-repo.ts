@@ -15,6 +15,7 @@ export type SetRow = {
 };
 
 const fixtureBySetId = new Map<string, string>();
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function toDbDecimal(value: number | null | undefined) {
   if (value == null) return null;
@@ -97,7 +98,11 @@ export const setsRepo = {
       conditions.push(eq(sets.tcgType, filters.tcgType));
     }
     if (filters.setId && filters.setId !== "all") {
-      conditions.push(eq(sets.id, filters.setId));
+      if (UUID_RE.test(filters.setId)) {
+        conditions.push(eq(sets.id, filters.setId));
+      } else {
+        conditions.push(eq(sets.sourceSetId, filters.setId));
+      }
     }
     if (filters.printStatus === "in-print") {
       conditions.push(eq(sets.isOutOfPrint, false));

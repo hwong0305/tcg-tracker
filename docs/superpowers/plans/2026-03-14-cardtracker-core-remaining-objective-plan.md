@@ -75,7 +75,7 @@ Run: `bun test packages/data/test/sets-repo.test.ts`
 Run: `bun test packages/data/test/cards-repo.test.ts`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/data/src/repos/sets-repo.ts packages/data/src/repos/cards-repo.ts packages/data/test/sets-repo.test.ts packages/data/test/cards-repo.test.ts
@@ -175,10 +175,10 @@ git commit -m "chore: add ci workflow for backend web and compose smoke verifica
 
 ## Final Completion Checklist
 
-- [ ] `jobsRepo`, `setsRepo`, and `cardsRepo` are DB-backed
+- [x] `jobsRepo`, `setsRepo`, and `cardsRepo` are DB-backed
 - [ ] queue endpoints persist and update job states asynchronously with error visibility
 - [ ] compose startup automatically prepares schema
 - [ ] dashboard serves persistent data after restarts
-- [ ] backend and frontend test suites pass
+- [x] backend and frontend test suites pass
 - [ ] compose smoke flow passes with and without `devSeed`
 - [ ] CI enforces regression checks

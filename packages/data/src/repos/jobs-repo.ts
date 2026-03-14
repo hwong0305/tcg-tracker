@@ -8,6 +8,8 @@ type JobRunCreate = {
   requestPayloadJson?: unknown;
 };
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 type JobRunRecord = {
   id: string;
   type: string;
@@ -71,6 +73,9 @@ export const jobsRepo = {
   },
 
   async getById(id: string) {
+    if (!UUID_RE.test(id)) {
+      return null;
+    }
     const rows = await db.select().from(jobRuns).where(eq(jobRuns.id, id)).limit(1);
     if (!rows[0]) {
       return null;

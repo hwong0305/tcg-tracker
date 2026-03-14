@@ -4,9 +4,12 @@ import { setsRepo } from "../../data/src/repos/sets-repo";
 import { recomputeFlags } from "../src/recompute-flags";
 
 test("fixture A/B/C/D recompute outcomes", async () => {
+  const setFixtureId = "11111111-1111-4111-8111-111111111111";
+  const setFixtureBId = "22222222-2222-4222-8222-222222222222";
+
   await setsRepo.seed([
     {
-      id: "s-fixture",
+      id: setFixtureId,
       tcgType: "OnePiece",
       sourceSetId: "OP-FIX",
       setName: "Fixture",
@@ -17,7 +20,7 @@ test("fixture A/B/C/D recompute outcomes", async () => {
       fixtureKey: "fixtureA"
     },
     {
-      id: "s-fixture-b",
+      id: setFixtureBId,
       tcgType: "OnePiece",
       sourceSetId: "OP-FIX-B",
       setName: "Fixture B",
@@ -31,9 +34,9 @@ test("fixture A/B/C/D recompute outcomes", async () => {
 
   await cardsRepo.seed([
     {
-      id: "c-fixture-c",
+      id: "33333333-3333-4333-8333-333333333333",
       sourceCardId: "C-FIX-C",
-      setId: "s-fixture",
+      setId: setFixtureId,
       cardName: "C",
       rarity: "Rare",
       marketPrice: 49,
@@ -43,9 +46,9 @@ test("fixture A/B/C/D recompute outcomes", async () => {
       fixtureKey: "fixtureC"
     },
     {
-      id: "c-fixture-d",
+      id: "44444444-4444-4444-8444-444444444444",
       sourceCardId: "C-FIX-D",
-      setId: "s-fixture",
+      setId: setFixtureId,
       cardName: "D",
       rarity: "Manga Rare",
       marketPrice: null,
@@ -56,7 +59,7 @@ test("fixture A/B/C/D recompute outcomes", async () => {
     }
   ]);
 
-  const result = await recomputeFlags(["s-fixture", "s-fixture-b"], { todayUtc: "2026-03-13" });
+  const result = await recomputeFlags([setFixtureId, setFixtureBId], { todayUtc: "2026-03-13" });
   expect(result.assertions.fixtureA_OOP).toBe(true);
   expect(result.assertions.fixtureB_OOP).toBe(true);
   expect(result.assertions.fixtureC_Chase).toBe(true);

@@ -37,7 +37,21 @@ describe("API contracts", () => {
         body: JSON.stringify({ devSeed: true })
       })
     );
+    const ingest = await ingestRes.json();
     expect(ingestRes.status).toBe(202);
+
+    let completed = false;
+    for (let i = 0; i < 10; i += 1) {
+      const statusRes = await app.handle(new Request(`http://localhost/jobs/${ingest.jobId}`));
+      const statusBody = await statusRes.json();
+      if (statusBody.status === "completed") {
+        completed = true;
+        break;
+      }
+      await Bun.sleep(10);
+    }
+
+    expect(completed).toBe(true);
 
     const dashboardRes = await app.handle(new Request("http://localhost/dashboard"));
     const dashboard = await dashboardRes.json();
