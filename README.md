@@ -1,0 +1,45 @@
+# CardTracker Core
+
+## Workspace Setup
+
+1. `bun install`
+2. Copy `.env.example` to `.env`
+3. Run `bun test apps/api/test/smoke.test.ts`
+
+## Local Setup
+
+```bash
+bun install
+cp .env.example .env
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/cardtracker bunx drizzle-kit generate --config packages/data/drizzle.config.ts
+```
+
+## Run Commands
+
+```bash
+bun run dev:api
+bun run dev:web
+bun test
+bun --cwd apps/web run test
+```
+
+## Job Endpoints
+
+```bash
+curl -X POST http://localhost:3000/jobs/ingest/onepiece
+curl -X POST http://localhost:3000/jobs/scrape/prices -H "content-type: application/json" -d '{"setIds":["s1"]}'
+curl -X POST http://localhost:3000/jobs/recompute/flags
+curl http://localhost:3000/jobs/<jobId>
+```
+
+## Dashboard Filters
+
+- UI filter key: `set`
+- API query param: `setId`
+- Other filters: `printStatus`, `tcgType`, `rarity`, `chaseOnly`
+- Presets: `Store Hunter` and `Vault`
+
+## MVP Limits
+
+- One Piece ingestion only in phase 1
+- Scrape source is best-effort and may return partial runs

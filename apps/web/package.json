@@ -1,0 +1,9 @@
+{
+  "name": "@cardtracker/web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "test": "vitest run"
+  }
+}

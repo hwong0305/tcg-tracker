@@ -1,0 +1,8 @@
+{
+  "name": "@cardtracker/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/server.ts"
+  }
+}

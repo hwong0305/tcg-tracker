@@ -1,0 +1,5 @@
+{
+  "name": "@cardtracker/providers",
+  "private": true,
+  "type": "module"
+}

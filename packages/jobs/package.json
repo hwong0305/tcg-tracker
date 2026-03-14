@@ -1,0 +1,5 @@
+{
+  "name": "@cardtracker/jobs",
+  "private": true,
+  "type": "module"
+}
