@@ -155,14 +155,12 @@ export async function runIngestOnePieceJob(input: IngestInput, options?: { jobId
     await jobsRepo.finalize(run.id, { status: "completed", statsJson: stats, finishedAt: new Date() });
     return { status: "completed" as const, stats };
   } catch (error) {
-    const errorData = error instanceof Error ? error : new Error(String(error));
+    const isProviderError = error && typeof error === "object" && "code" in error && "retryable" in error;
     await jobsRepo.finalize(run.id, {
       status: "failed",
-      errorsJson: [{ 
-        message: errorData.message,
-        code: (error as any)?.code || "UNKNOWN",
-        entity: (error as any)?.entity || "card"
-      }],
+      errorsJson: isProviderError
+        ? [{ message: (error as any).reason, code: (error as any).code, entity: (error as any).entity }]
+        : [{ message: error instanceof Error ? error.message : String(error), code: "UNKNOWN", entity: "card" }],
       finishedAt: new Date()
     });
     throw error;
