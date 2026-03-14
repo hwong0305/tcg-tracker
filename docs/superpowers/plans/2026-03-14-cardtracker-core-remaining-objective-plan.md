@@ -93,15 +93,15 @@ git commit -m "feat: persist set and card repositories with drizzle"
 - Modify: `packages/jobs/src/recompute-flags.ts`
 - Test: `apps/api/test/jobs-routes.test.ts`
 
-- [ ] **Step 1: Add failing tests for reliable state transitions and failed job persistence**
-- [ ] **Step 2: Run tests to verify failure**
+- [x] **Step 1: Add failing tests for reliable state transitions and failed job persistence**
+- [x] **Step 2: Run tests to verify failure**
 
 Run: `bun test apps/api/test/jobs-routes.test.ts`
 Expected: FAIL.
 
-- [ ] **Step 3: Ensure every queue path is `queued -> running -> completed|partial|failed` with persisted errors/stats**
-- [ ] **Step 4: Ensure no unhandled background promise failures**
-- [ ] **Step 5: Run tests to verify pass**
+- [x] **Step 3: Ensure every queue path is `queued -> running -> completed|partial|failed` with persisted errors/stats**
+- [x] **Step 4: Ensure no unhandled background promise failures**
+- [x] **Step 5: Run tests to verify pass**
 
 Run: `bun test apps/api/test/jobs-routes.test.ts`
 Expected: PASS.
@@ -176,7 +176,7 @@ git commit -m "chore: add ci workflow for backend web and compose smoke verifica
 ## Final Completion Checklist
 
 - [x] `jobsRepo`, `setsRepo`, and `cardsRepo` are DB-backed
-- [ ] queue endpoints persist and update job states asynchronously with error visibility
+- [x] queue endpoints persist and update job states asynchronously with error visibility
 - [ ] compose startup automatically prepares schema
 - [ ] dashboard serves persistent data after restarts
 - [x] backend and frontend test suites pass

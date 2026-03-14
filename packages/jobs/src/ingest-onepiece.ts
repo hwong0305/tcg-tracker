@@ -3,7 +3,7 @@ import { jobsRepo } from "../../data/src/repos/jobs-repo";
 import { setsRepo } from "../../data/src/repos/sets-repo";
 import { fetchOnePieceCards, fetchOnePieceSets, normalizeCard, normalizeSet } from "../../providers/src";
 
-type IngestInput = { setIds?: string[]; devSeed?: boolean };
+type IngestInput = { setIds?: string[]; devSeed?: boolean; forceFailure?: boolean; onePieceBaseUrl?: string };
 
 async function seedDevData() {
   const seeded = await setsRepo.upsertMany([
@@ -70,13 +70,17 @@ export async function runIngestOnePieceJob(input: IngestInput, options?: { jobId
   try {
     await jobsRepo.markRunning(run.id);
 
+    if (input.forceFailure === true) {
+      throw new Error("FORCED_INGEST_FAILURE");
+    }
+
     if (input.devSeed === true) {
       const stats = await seedDevData();
       await jobsRepo.finalize(run.id, { status: "completed", statsJson: stats, finishedAt: new Date() });
       return { status: "completed" as const, stats };
     }
 
-    const rawSets = await fetchOnePieceSets(process.env.ONEPIECE_API_BASE_URL || "https://optcg-api.com");
+    const rawSets = await fetchOnePieceSets(input.onePieceBaseUrl || process.env.ONEPIECE_API_BASE_URL || "https://optcg-api.com");
     const normalizedSets = (rawSets as any[])
       .map(normalizeSet)
       .filter((s) => !input.setIds || input.setIds.includes(s.sourceSetId))
@@ -95,7 +99,10 @@ export async function runIngestOnePieceJob(input: IngestInput, options?: { jobId
 
     const cardStats = { createdCards: 0, updatedCards: 0 };
     for (const set of normalizedSets) {
-      const rawCards = await fetchOnePieceCards(process.env.ONEPIECE_API_BASE_URL || "https://optcg-api.com", set.sourceSetId);
+      const rawCards = await fetchOnePieceCards(
+        input.onePieceBaseUrl || process.env.ONEPIECE_API_BASE_URL || "https://optcg-api.com",
+        set.sourceSetId
+      );
       const persistedSetId = setIdBySource.get(set.sourceSetId);
       if (!persistedSetId) {
         continue;

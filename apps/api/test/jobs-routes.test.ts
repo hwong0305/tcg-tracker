@@ -71,14 +71,47 @@ describe("API contracts", () => {
     );
     const created = await create.json();
 
-    await Bun.sleep(20);
+    let completed: any = null;
+    for (let i = 0; i < 20; i += 1) {
+      const statusRes = await app.handle(new Request(`http://localhost/jobs/${created.jobId}`));
+      const status = await statusRes.json();
+      if (status.status === "completed") {
+        completed = status;
+        break;
+      }
+      await Bun.sleep(10);
+    }
 
-    const statusRes = await app.handle(new Request(`http://localhost/jobs/${created.jobId}`));
-    const status = await statusRes.json();
+    expect(completed).not.toBeNull();
+    expect(completed.status).toBe("completed");
+    expect(typeof completed.finishedAt).toBe("string");
+  });
 
-    expect(statusRes.status).toBe(200);
-    expect(status.status).toBe("completed");
-    expect(typeof status.finishedAt).toBe("string");
+  test("failed ingest job persists failed status and errors", async () => {
+    const create = await app.handle(
+      new Request("http://localhost/jobs/ingest/onepiece", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ devSeed: true, forceFailure: true })
+      })
+    );
+    const created = await create.json();
+
+    let failed: any = null;
+    for (let i = 0; i < 10; i += 1) {
+      const statusRes = await app.handle(new Request(`http://localhost/jobs/${created.jobId}`));
+      const status = await statusRes.json();
+      if (status.status === "failed") {
+        failed = status;
+        break;
+      }
+      await Bun.sleep(10);
+    }
+
+    expect(failed).not.toBeNull();
+    expect(failed.status).toBe("failed");
+    expect(Array.isArray(failed.errors)).toBe(true);
+    expect(failed.errors.length).toBeGreaterThan(0);
   });
 
   test("POST /jobs/scrape/prices handles union+dedupe semantics", async () => {
