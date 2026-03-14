@@ -27,10 +27,13 @@ bun --cwd apps/web run test
 
 ```bash
 curl -X POST http://localhost:3000/jobs/ingest/onepiece
+curl -X POST http://localhost:3000/jobs/ingest/onepiece -H "content-type: application/json" -d '{"devSeed":true}'
 curl -X POST http://localhost:3000/jobs/scrape/prices -H "content-type: application/json" -d '{"setIds":["s1"]}'
 curl -X POST http://localhost:3000/jobs/recompute/flags
 curl http://localhost:3000/jobs/<jobId>
 ```
+
+`devSeed: true` is a local development fallback that seeds sample One Piece sets/cards when upstream ingestion is unavailable.
 
 ## Dashboard Filters
 

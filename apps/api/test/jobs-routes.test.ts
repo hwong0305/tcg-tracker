@@ -29,6 +29,24 @@ describe("API contracts", () => {
     expect(body.status).toBe("queued");
   });
 
+  test("POST /jobs/ingest/onepiece with devSeed seeds dashboard fallback data", async () => {
+    const ingestRes = await app.handle(
+      new Request("http://localhost/jobs/ingest/onepiece", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ devSeed: true })
+      })
+    );
+    expect(ingestRes.status).toBe(202);
+
+    const dashboardRes = await app.handle(new Request("http://localhost/dashboard"));
+    const dashboard = await dashboardRes.json();
+
+    expect(dashboardRes.status).toBe(200);
+    expect(dashboard.sets.length).toBeGreaterThan(0);
+    expect(dashboard.cards.length).toBeGreaterThan(0);
+  });
+
   test("POST /jobs/scrape/prices handles union+dedupe semantics", async () => {
     const res = await app.handle(
       new Request("http://localhost/jobs/scrape/prices", {
