@@ -77,7 +77,12 @@ curl http://localhost:3000/jobs/<jobId>
 
 ## Card Ingest Source
 
-The ingest job fetches all cards in a single call from `GET ${ONEPIECE_API_BASE_URL}/api/allSetCards/` (default base: `https://www.optcgapi.com`). Sets are derived from the flat card rows and upserted automatically. Invalid rows are skipped; the job only fails if every row is invalid.
+The ingest job fetches cards from three upstream endpoints in sequence:
+1. `GET ${ONEPIECE_API_BASE_URL}/api/allSetCards/` (booster/expansion sets)
+2. `GET ${ONEPIECE_API_BASE_URL}/api/allSTCards/` (starter decks)
+3. `GET ${ONEPIECE_API_BASE_URL}/api/allPromos/` (promo cards)
+
+Default base URL: `https://www.optcgapi.com`. Rows are deduplicated by `card_set_id` — when the same card appears in multiple sources, the row with the latest `date_scraped` is kept. Ingest stats report `totalFetched`, `duplicatesRemoved`, and `invalidRows`.
 
 ## Theme Support
 

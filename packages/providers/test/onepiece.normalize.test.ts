@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { normalizeCard, normalizeSet, normalizeAllSetCardRow } from "../src/onepiece/normalize";
+import { normalizeCard, normalizeSet, normalizeAllSetCardRow, deduplicateRows } from "../src/onepiece/normalize";
 
 test("normalizeSet maps provider fields", () => {
   const dto = normalizeSet({ id: "op-01", name: "Romance Dawn", releaseDate: "2022-12-02" });
@@ -54,4 +54,46 @@ test("normalizeAllSetCardRow normalizes optional field empties", () => {
   expect(row.rarity).toBeNull();
   expect(row.imageUrl).toBeNull();
   expect(row.marketPrice).toBeNull();
+});
+
+test("deduplicateRows keeps row with latest date_scraped for same card_set_id", () => {
+  const rows = [
+    { card_set_id: "OP01-001", card_name: "Zoro", set_id: "OP-01", set_name: "Romance Dawn", date_scraped: "2026-03-12" },
+    { card_set_id: "OP01-001", card_name: "Zoro Promo", set_id: "OP-01", set_name: "Romance Dawn", date_scraped: "2026-03-13" }
+  ];
+  const result = deduplicateRows(rows);
+  expect(result.deduplicated.length).toBe(1);
+  expect(result.deduplicated[0].card_name).toBe("Zoro Promo");
+  expect(result.duplicatesRemoved).toBe(1);
+});
+
+test("deduplicateRows keeps last-in-array when date_scraped is equal", () => {
+  const rows = [
+    { card_set_id: "ST01-015", card_name: "First", set_id: "ST-01", set_name: "Starter 1", date_scraped: "2026-03-13" },
+    { card_set_id: "ST01-015", card_name: "Second", set_id: "ST-01", set_name: "Starter 1", date_scraped: "2026-03-13" }
+  ];
+  const result = deduplicateRows(rows);
+  expect(result.deduplicated.length).toBe(1);
+  expect(result.deduplicated[0].card_name).toBe("Second");
+  expect(result.duplicatesRemoved).toBe(1);
+});
+
+test("deduplicateRows keeps last-in-array when date_scraped is missing", () => {
+  const rows = [
+    { card_set_id: "X-001", card_name: "First", set_id: "X", set_name: "Set X" },
+    { card_set_id: "X-001", card_name: "Second", set_id: "X", set_name: "Set X" }
+  ];
+  const result = deduplicateRows(rows);
+  expect(result.deduplicated.length).toBe(1);
+  expect(result.deduplicated[0].card_name).toBe("Second");
+});
+
+test("deduplicateRows keeps all rows with different card_set_id", () => {
+  const rows = [
+    { card_set_id: "OP01-001", card_name: "A", set_id: "OP-01", set_name: "S1", date_scraped: "2026-03-12" },
+    { card_set_id: "OP01-002", card_name: "B", set_id: "OP-01", set_name: "S1", date_scraped: "2026-03-12" }
+  ];
+  const result = deduplicateRows(rows);
+  expect(result.deduplicated.length).toBe(2);
+  expect(result.duplicatesRemoved).toBe(0);
 });

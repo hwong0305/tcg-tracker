@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { mapOnePieceError, fetchOnePieceAllSetCards } from "../src/onepiece/client";
+import { mapOnePieceError, fetchOnePieceAllSetCards, fetchOnePieceAllSTCards, fetchOnePieceAllPromos } from "../src/onepiece/client";
 
 test("maps timeout to retryable network error", () => {
   const err = mapOnePieceError(new Error("ETIMEDOUT"), "set");
@@ -50,4 +50,34 @@ test("fetchOnePieceAllSetCards maps invalid JSON parse failure", async () => {
     code: "HTTP_ERROR",
     entity: "card"
   });
+});
+
+test("fetchOnePieceAllSTCards calls /api/allSTCards/", async () => {
+  const calls: string[] = [];
+  globalThis.fetch = (async (url: string) => {
+    calls.push(url);
+    return new Response(JSON.stringify([{ set_id: "ST-01", set_name: "Starter Deck 1", card_set_id: "ST01-001", card_name: "Luffy" }]), {
+      status: 200,
+      headers: { "content-type": "application/json" }
+    });
+  }) as any;
+
+  const rows = await fetchOnePieceAllSTCards("https://www.optcgapi.com");
+  expect(calls[0]).toBe("https://www.optcgapi.com/api/allSTCards/");
+  expect(Array.isArray(rows)).toBe(true);
+});
+
+test("fetchOnePieceAllPromos calls /api/allPromos/", async () => {
+  const calls: string[] = [];
+  globalThis.fetch = (async (url: string) => {
+    calls.push(url);
+    return new Response(JSON.stringify([{ set_id: "P", set_name: "Promos", card_set_id: "P-001", card_name: "Promo Luffy" }]), {
+      status: 200,
+      headers: { "content-type": "application/json" }
+    });
+  }) as any;
+
+  const rows = await fetchOnePieceAllPromos("https://www.optcgapi.com");
+  expect(calls[0]).toBe("https://www.optcgapi.com/api/allPromos/");
+  expect(Array.isArray(rows)).toBe(true);
 });
