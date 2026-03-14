@@ -36,15 +36,19 @@ export default function App() {
     });
   }, [data, filters]);
 
-  const onPreset = (preset: "store-hunter" | "vault") => {
-    setFilters((prev) => ({
-      ...prev,
-      printStatus: preset === "store-hunter" ? "in-print" : "out-of-print"
-    }));
+  const onPreset = (preset: "store-hunter" | "vault" | "all") => {
+    if (preset === "all") {
+      setFilters(initialFilters);
+    } else {
+      setFilters((prev) => ({
+        ...prev,
+        printStatus: preset === "store-hunter" ? "in-print" : "out-of-print"
+      }));
+    }
   };
 
   const tcgOptions = Array.from(new Set(data.cards.map((c) => c.tcgType)));
-  const setOptions = Array.from(new Set(data.cards.map((c) => c.setId)));
+  const setOptions = data.sets.map((s) => ({ id: s.id, name: s.setName }));
   const rarityOptions = Array.from(new Set(data.cards.map((c) => c.rarity).filter((r): r is string => r != null)));
 
   if (loading) return <div>Loading...</div>;

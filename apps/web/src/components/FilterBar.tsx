@@ -8,6 +8,23 @@ export type FilterState = {
   chaseOnly: boolean;
 };
 
+type SetOption = { id: string; name: string };
+
+const RARITY_MAP: Record<string, string> = {
+  L: "Leader",
+  C: "Common",
+  UC: "Uncommon",
+  R: "Rare",
+  SR: "Super Rare",
+  SEC: "Secret Rare",
+  PR: "Promo",
+  P: "Promo"
+};
+
+export function formatRarity(rarity: string): string {
+  return RARITY_MAP[rarity] || rarity;
+}
+
 export function FilterBar({
   filters,
   onChange,
@@ -18,9 +35,9 @@ export function FilterBar({
 }: {
   filters: FilterState;
   onChange: (next: FilterState) => void;
-  onPreset: (preset: "store-hunter" | "vault") => void;
+  onPreset: (preset: "store-hunter" | "vault" | "all") => void;
   tcgOptions: string[];
-  setOptions: string[];
+  setOptions: SetOption[];
   rarityOptions: string[];
 }) {
   return (
@@ -56,8 +73,8 @@ export function FilterBar({
           <select aria-label="Set" value={filters.set} onChange={(e) => onChange({ ...filters, set: e.target.value })}>
             <option value="all">All</option>
             {setOptions.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
+              <option key={opt.id} value={opt.id}>
+                {opt.name}
               </option>
             ))}
           </select>
@@ -69,7 +86,7 @@ export function FilterBar({
             <option value="all">All</option>
             {rarityOptions.map((opt) => (
               <option key={opt} value={opt}>
-                {opt}
+                {formatRarity(opt)} ({opt})
               </option>
             ))}
           </select>
@@ -88,6 +105,9 @@ export function FilterBar({
         </label>
 
         <div className="preset-buttons">
+          <button type="button" onClick={() => onPreset("all")}>
+            All
+          </button>
           <button type="button" onClick={() => onPreset("store-hunter")}>
             Store Hunter
           </button>
