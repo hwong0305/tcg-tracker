@@ -142,7 +142,7 @@ Expected: PASS.
 Run: `docker compose up --build -d && docker compose ps`
 Expected: healthy `postgres`, running `api`/`web` without manual migration command.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add scripts/api-entrypoint.sh Dockerfile.api docker-compose.yml apps/api/test/docker-compose.test.ts README.md
@@ -157,9 +157,9 @@ git commit -m "feat: run database migration automatically on api container start
 - Create: `.github/workflows/ci.yml`
 - Modify: `README.md`
 
-- [ ] **Step 1: Write failing CI lint check locally (if workflow validation script exists) or dry-run checks**
-- [ ] **Step 2: Implement CI jobs (`bun install`, backend tests, web tests)**
-- [ ] **Step 3: Run full local verification**
+- [x] **Step 1: Write failing CI lint check locally (if workflow validation script exists) or dry-run checks**
+- [x] **Step 2: Implement CI jobs (`bun install`, backend tests, web tests)**
+- [x] **Step 3: Run full local verification**
 
 Run: `bun test apps/api packages`
 Run: `bun run test` (workdir `apps/web`)
@@ -177,8 +177,8 @@ git commit -m "chore: add ci workflow for backend web and compose smoke verifica
 
 - [x] `jobsRepo`, `setsRepo`, and `cardsRepo` are DB-backed
 - [x] queue endpoints persist and update job states asynchronously with error visibility
-- [ ] compose startup automatically prepares schema
-- [ ] dashboard serves persistent data after restarts
+- [x] compose startup automatically prepares schema
+- [x] dashboard serves persistent data after restarts
 - [x] backend and frontend test suites pass
-- [ ] compose smoke flow passes with and without `devSeed`
-- [ ] CI enforces regression checks
+- [x] compose smoke flow passes with and without `devSeed`
+- [x] CI enforces regression checks

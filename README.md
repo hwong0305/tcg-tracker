@@ -40,6 +40,16 @@ bun test
 bun --cwd apps/web run test
 ```
 
+## CI Checks
+
+GitHub Actions runs:
+
+- `bun install`
+- `drizzle-kit push` against PostgreSQL service
+- `bun test apps/api packages`
+- `bun run test` in `apps/web`
+- compose smoke checks for `/health` and `/dashboard`
+
 ## Job Endpoints
 
 ```bash

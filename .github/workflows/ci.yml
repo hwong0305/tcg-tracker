@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cardtracker
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d cardtracker"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/cardtracker
+      ONEPIECE_API_BASE_URL: https://optcg-api.com
+      PRICECHARTING_BASE_URL: https://www.pricecharting.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install
+      - name: Apply database schema
+        run: bunx drizzle-kit push --config packages/data/drizzle.config.ts
+      - name: Run backend and package tests
+        run: bun test apps/api packages
+      - name: Run web tests
+        run: bun run test
+        working-directory: apps/web
+
+  compose-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start stack
+        run: docker compose up --build -d
+      - name: Wait for API health
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3000/health >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API health check did not become ready in time"
+          exit 1
+      - name: Check dashboard endpoint
+        run: curl -fsS http://localhost:3000/dashboard
+      - name: Show compose service status
+        if: always()
+        run: docker compose ps
+      - name: Stop stack
+        if: always()
+        run: docker compose down -v
