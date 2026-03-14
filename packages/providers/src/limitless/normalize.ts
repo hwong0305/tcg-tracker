@@ -2,6 +2,7 @@ import type { LimitlessSet, LimitlessCard } from "./scraper";
 
 export interface NormalizedLimitlessSet {
   sourceSetId: string;
+  setSlug: string;
   setName: string;
   releaseDate: string | null;
   currentBoxPrice: number | null;
@@ -10,6 +11,8 @@ export interface NormalizedLimitlessSet {
 
 export interface NormalizedLimitlessCard {
   sourceCardId: string;
+  cardName: string | null;
+  rarity: string | null;
   imageUrl: string | null;
   parallelVariant: string | null;
 }
@@ -17,6 +20,7 @@ export interface NormalizedLimitlessCard {
 export function normalizeLimitlessSet(raw: LimitlessSet): NormalizedLimitlessSet {
   return {
     sourceSetId: raw.sourceSetId,
+    setSlug: raw.setSlug,
     setName: raw.setName,
     releaseDate: raw.releaseDate,
     currentBoxPrice: raw.usdTotal,
@@ -27,6 +31,8 @@ export function normalizeLimitlessSet(raw: LimitlessSet): NormalizedLimitlessSet
 export function normalizeLimitlessCard(raw: LimitlessCard): NormalizedLimitlessCard {
   return {
     sourceCardId: raw.sourceCardId,
+    cardName: raw.cardName,
+    rarity: raw.rarity,
     imageUrl: raw.imageUrl,
     parallelVariant: raw.parallelVariant
   };

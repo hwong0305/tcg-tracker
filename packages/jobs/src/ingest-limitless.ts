@@ -29,6 +29,7 @@ export async function runIngestLimitlessJob(input: IngestInput, options?: { jobI
         setName: s.setName,
         releaseDate: s.releaseDate,
         currentBoxPrice: s.currentBoxPrice,
+        eurBoxPrice: s.eurBoxPrice,
         msrpPackPrice: 4.49,
         isOutOfPrint: false
       }))
@@ -43,11 +44,11 @@ export async function runIngestLimitlessJob(input: IngestInput, options?: { jobI
     for (const set of filteredSets) {
       await new Promise(r => setTimeout(r, 500));
 
-      const slug = set.sourceSetId.toLowerCase().replace("OP", "op").replace("ST", "st").replace("EB", "eb").replace("PRB", "prb");
-      const setSlug = `${slug}-${set.setName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-")}`;
+      const fallbackSlug = set.sourceSetId.toLowerCase().replace("OP", "op").replace("ST", "st").replace("EB", "eb").replace("PRB", "prb");
+      const setSlug = set.setSlug || fallbackSlug;
 
       try {
-        const rawCards = await fetchLimitlessCards(baseUrl, slug);
+        const rawCards = await fetchLimitlessCards(baseUrl, setSlug);
         totalCardsScraped += rawCards.length;
 
         const setId = setIdBySource.get(set.sourceSetId);
@@ -58,11 +59,12 @@ export async function runIngestLimitlessJob(input: IngestInput, options?: { jobI
           return {
             sourceCardId: normalized.sourceCardId,
             setId,
-            cardName: normalized.sourceCardId,
-            rarity: null,
+            cardName: normalized.cardName ?? normalized.sourceCardId,
+            rarity: normalized.rarity,
             marketPrice: null,
             isChase: false,
             imageUrl: normalized.imageUrl,
+            parallelVariant: normalized.parallelVariant,
             tcgType: "OnePiece" as const
           };
         });
