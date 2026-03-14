@@ -13,6 +13,7 @@ export type CardRow = {
   scrapedPackPrice?: number | null;
   isChase: boolean;
   imageUrl: string | null;
+  parallelVariant?: string | null;
   fixtureKey?: string;
   tcgType?: string;
   printStatus?: "in-print" | "out-of-print";
@@ -70,7 +71,8 @@ export const cardsRepo = {
         rarity: row.rarity,
         marketPrice: toDbDecimal(row.marketPrice),
         isChase: row.isChase,
-        imageUrl: row.imageUrl
+        imageUrl: row.imageUrl,
+        parallelVariant: row.parallelVariant
       };
 
       if (existing[0]) {
@@ -170,7 +172,8 @@ export const cardsRepo = {
           rarity: row.rarity,
           marketPrice: toDbDecimal(row.marketPrice),
           isChase: row.isChase,
-          imageUrl: row.imageUrl
+          imageUrl: row.imageUrl,
+          parallelVariant: row.parallelVariant
         })
         .onConflictDoUpdate({
           target: cards.id,
@@ -181,7 +184,8 @@ export const cardsRepo = {
             rarity: row.rarity,
             marketPrice: toDbDecimal(row.marketPrice),
             isChase: row.isChase,
-            imageUrl: row.imageUrl
+            imageUrl: row.imageUrl,
+            parallelVariant: row.parallelVariant
           }
         });
 

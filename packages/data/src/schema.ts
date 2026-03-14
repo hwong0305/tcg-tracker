@@ -12,7 +12,8 @@ export const sets = pgTable(
     currentBoxPrice: decimal("current_box_price", { precision: 10, scale: 2 }),
     isOutOfPrint: boolean("is_out_of_print").default(false),
     dataQuality: text("data_quality").default("stale"),
-    lastScraped: timestamp("last_scraped").defaultNow()
+    lastScraped: timestamp("last_scraped").defaultNow(),
+    eurBoxPrice: decimal("eur_box_price", { precision: 10, scale: 2 })
   },
   (t) => [unique("sets_tcg_type_source_set_id_unique").on(t.tcgType, t.sourceSetId)]
 );
@@ -28,7 +29,8 @@ export const cards = pgTable(
     marketPrice: decimal("market_price", { precision: 10, scale: 2 }),
     isChase: boolean("is_chase").default(false),
     imageUrl: text("image_url"),
-    lastPriceUpdated: timestamp("last_price_updated")
+    lastPriceUpdated: timestamp("last_price_updated"),
+    parallelVariant: text("parallel_variant")
   },
   (t) => [unique("cards_set_id_source_card_id_unique").on(t.setId, t.sourceCardId)]
 );

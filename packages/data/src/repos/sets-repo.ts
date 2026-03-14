@@ -11,6 +11,7 @@ export type SetRow = {
   currentBoxPrice: number | null;
   msrpPackPrice: number | null;
   isOutOfPrint: boolean;
+  eurBoxPrice?: number | null;
   fixtureKey?: string;
 };
 
@@ -32,6 +33,7 @@ function mapSet(row: typeof sets.$inferSelect): SetRow {
     currentBoxPrice: row.currentBoxPrice == null ? null : Number(row.currentBoxPrice),
     msrpPackPrice: row.msrpPackPrice == null ? null : Number(row.msrpPackPrice),
     isOutOfPrint: row.isOutOfPrint ?? false,
+    eurBoxPrice: row.eurBoxPrice == null ? null : Number(row.eurBoxPrice),
     fixtureKey: fixtureBySetId.get(row.id)
   };
 }
@@ -56,7 +58,8 @@ export const setsRepo = {
         releaseDate: row.releaseDate,
         currentBoxPrice: toDbDecimal(row.currentBoxPrice),
         msrpPackPrice: toDbDecimal(row.msrpPackPrice),
-        isOutOfPrint: row.isOutOfPrint
+        isOutOfPrint: row.isOutOfPrint,
+        eurBoxPrice: toDbDecimal(row.eurBoxPrice)
       };
 
       if (existing[0]) {
@@ -130,7 +133,8 @@ export const setsRepo = {
           releaseDate: row.releaseDate,
           currentBoxPrice: toDbDecimal(row.currentBoxPrice),
           msrpPackPrice: toDbDecimal(row.msrpPackPrice),
-          isOutOfPrint: row.isOutOfPrint
+          isOutOfPrint: row.isOutOfPrint,
+          eurBoxPrice: toDbDecimal(row.eurBoxPrice)
         })
         .onConflictDoUpdate({
           target: sets.id,
@@ -141,7 +145,8 @@ export const setsRepo = {
             releaseDate: row.releaseDate,
             currentBoxPrice: toDbDecimal(row.currentBoxPrice),
             msrpPackPrice: toDbDecimal(row.msrpPackPrice),
-            isOutOfPrint: row.isOutOfPrint
+            isOutOfPrint: row.isOutOfPrint,
+            eurBoxPrice: toDbDecimal(row.eurBoxPrice)
           }
         });
 
