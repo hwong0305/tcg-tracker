@@ -66,8 +66,8 @@ export function deduplicateRows(rows: any[]): { deduplicated: any[]; duplicatesR
   const groups = new Map<string, any[]>();
 
   for (const row of rows) {
-    const key = row.card_set_id;
-    if (!key) continue;
+    const key = `${row.card_set_id}|${row.rarity}`;
+    if (!row.card_set_id || !row.rarity) continue;
     const group = groups.get(key);
     if (group) {
       group.push(row);

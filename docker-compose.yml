@@ -24,7 +24,7 @@ services:
     working_dir: /app
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/cardtracker
-      ONEPIECE_API_BASE_URL: https://optcg-api.com
+      ONEPIECE_API_BASE_URL: https://www.optcgapi.com
       PRICECHARTING_BASE_URL: https://www.pricecharting.com
     depends_on:
       postgres:

@@ -72,8 +72,8 @@ test("ingest calls all 3 endpoints and filters setIds", async () => {
 
 test("ingest completes with partial-invalid rows and invalid count", async () => {
   const rowsWithInvalid = [
-    { set_id: "OP-01", set_name: "Romance Dawn", card_set_id: "OP01-001", card_name: "Zoro" },
-    { set_id: "", set_name: "Bad Set", card_set_id: "BAD-001", card_name: "Bad Card" }
+    { set_id: "OP-01", set_name: "Romance Dawn", card_set_id: "OP01-001", card_name: "Zoro", rarity: "L" },
+    { set_id: "", set_name: "Bad Set", card_set_id: "BAD-001", card_name: "Bad Card", rarity: "C" }
   ];
 
   const originalFetch = globalThis.fetch;
@@ -152,13 +152,13 @@ test("ingest fails INVALID_PAYLOAD when all rows invalid", async () => {
 
 test("ingest fetches from all 3 endpoints and deduplicates", async () => {
   const setCards = [
-    { set_id: "OP-01", set_name: "Romance Dawn", card_set_id: "OP01-001", card_name: "Zoro", date_scraped: "2026-03-12" }
+    { set_id: "OP-01", set_name: "Romance Dawn", card_set_id: "OP01-001", card_name: "Zoro", rarity: "L", date_scraped: "2026-03-12" }
   ];
   const stCards = [
-    { set_id: "ST-01", set_name: "Starter 1", card_set_id: "ST01-001", card_name: "Luffy", date_scraped: "2026-03-12" }
+    { set_id: "ST-01", set_name: "Starter 1", card_set_id: "ST01-001", card_name: "Luffy", rarity: "R", date_scraped: "2026-03-12" }
   ];
   const promos = [
-    { set_id: "OP-01", set_name: "Romance Dawn", card_set_id: "OP01-001", card_name: "Zoro Promo", date_scraped: "2026-03-13" }
+    { set_id: "OP-01", set_name: "Romance Dawn", card_set_id: "OP01-001", card_name: "Zoro Promo", rarity: "L", date_scraped: "2026-03-13" }
   ];
 
   const calls: string[] = [];
