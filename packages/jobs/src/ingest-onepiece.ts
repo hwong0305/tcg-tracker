@@ -1,7 +1,7 @@
 import { cardsRepo } from "../../data/src/repos/cards-repo";
 import { jobsRepo } from "../../data/src/repos/jobs-repo";
 import { setsRepo } from "../../data/src/repos/sets-repo";
-import { fetchOnePieceAllSetCards, normalizeAllSetCardRow } from "../../providers/src";
+import { fetchOnePieceAllSetCards, fetchOnePieceAllSTCards, fetchOnePieceAllPromos, normalizeAllSetCardRow, deduplicateRows } from "../../providers/src";
 
 type IngestInput = { setIds?: string[]; devSeed?: boolean; forceFailure?: boolean; onePieceBaseUrl?: string };
 
@@ -80,8 +80,14 @@ export async function runIngestOnePieceJob(input: IngestInput, options?: { jobId
       return { status: "completed" as const, stats };
     }
 
-    const baseUrl = input.onePieceBaseUrl || process.env.ONEPIECE_API_BASE_URL || "https://optcg-api.com";
-    const rawRows = await fetchOnePieceAllSetCards(baseUrl);
+    const baseUrl = input.onePieceBaseUrl || process.env.ONEPIECE_API_BASE_URL || "https://www.optcgapi.com";
+    const rawSetCards = await fetchOnePieceAllSetCards(baseUrl) as any[];
+    const rawSTCards = await fetchOnePieceAllSTCards(baseUrl) as any[];
+    const rawPromos = await fetchOnePieceAllPromos(baseUrl) as any[];
+
+    const allRawRows = [...rawSetCards, ...rawSTCards, ...rawPromos];
+    const totalFetched = allRawRows.length;
+    const { deduplicated: rawRows, duplicatesRemoved } = deduplicateRows(allRawRows);
 
     const validRows: ReturnType<typeof normalizeAllSetCardRow>[] = [];
     let invalidRowCount = 0;
@@ -138,6 +144,8 @@ export async function runIngestOnePieceJob(input: IngestInput, options?: { jobId
       : { created: 0, updated: 0, rows: [] };
 
     const stats = {
+      totalFetched,
+      duplicatesRemoved,
       createdSets: setUpsert.created,
       updatedSets: setUpsert.updated,
       createdCards: cardStats.created,

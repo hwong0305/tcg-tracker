@@ -62,6 +62,44 @@ export interface NormalizedAllSetCardRow {
   imageUrl: string | null;
 }
 
+export function deduplicateRows(rows: any[]): { deduplicated: any[]; duplicatesRemoved: number } {
+  const groups = new Map<string, any[]>();
+
+  for (const row of rows) {
+    const key = row.card_set_id;
+    if (!key) continue;
+    const group = groups.get(key);
+    if (group) {
+      group.push(row);
+    } else {
+      groups.set(key, [row]);
+    }
+  }
+
+  const deduplicated: any[] = [];
+  let duplicatesRemoved = 0;
+
+  for (const group of groups.values()) {
+    if (group.length === 1) {
+      deduplicated.push(group[0]);
+    } else {
+      duplicatesRemoved += group.length - 1;
+      let best = group[0];
+      for (let i = 1; i < group.length; i++) {
+        const current = group[i];
+        const bestDate = best.date_scraped ? new Date(best.date_scraped).getTime() : 0;
+        const currentDate = current.date_scraped ? new Date(current.date_scraped).getTime() : 0;
+        if (currentDate >= bestDate) {
+          best = current;
+        }
+      }
+      deduplicated.push(best);
+    }
+  }
+
+  return { deduplicated, duplicatesRemoved };
+}
+
 export function normalizeAllSetCardRow(raw: any): NormalizedAllSetCardRow {
   if (!isNonEmptyString(raw.set_id)) {
     throw mapOnePieceError(new Error("INVALID_PAYLOAD"), "card");
