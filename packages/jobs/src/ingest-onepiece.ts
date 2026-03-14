@@ -3,11 +3,78 @@ import { jobsRepo } from "../../data/src/repos/jobs-repo";
 import { setsRepo } from "../../data/src/repos/sets-repo";
 import { fetchOnePieceCards, fetchOnePieceSets, normalizeCard, normalizeSet } from "../../providers/src";
 
-export async function runIngestOnePieceJob(input: { setIds?: string[] }) {
-  const run = await jobsRepo.create({ type: "ingest-onepiece", status: "queued", requestPayloadJson: input });
+type IngestInput = { setIds?: string[]; devSeed?: boolean };
+
+async function seedDevData() {
+  const seeded = await setsRepo.upsertMany([
+    {
+      tcgType: "OnePiece",
+      sourceSetId: "OP01",
+      setName: "Romance Dawn",
+      releaseDate: "2022-12-02",
+      currentBoxPrice: 210,
+      msrpPackPrice: 4.49,
+      isOutOfPrint: true
+    },
+    {
+      tcgType: "OnePiece",
+      sourceSetId: "OP02",
+      setName: "Paramount War",
+      releaseDate: "2023-03-10",
+      currentBoxPrice: 155,
+      msrpPackPrice: 4.49,
+      isOutOfPrint: false
+    }
+  ]);
+
+  const setIdBySource = new Map(seeded.rows.map((row) => [row.sourceSetId, row.id]));
+
+  const cards = await cardsRepo.upsertMany([
+    {
+      sourceCardId: "OP01-001",
+      setId: setIdBySource.get("OP01")!,
+      cardName: "Monkey D. Luffy",
+      rarity: "Manga Rare",
+      marketPrice: 800,
+      isChase: true,
+      imageUrl: null,
+      tcgType: "OnePiece",
+      printStatus: "out-of-print"
+    },
+    {
+      sourceCardId: "OP02-050",
+      setId: setIdBySource.get("OP02")!,
+      cardName: "Trafalgar Law",
+      rarity: "Alt Art",
+      marketPrice: 120,
+      isChase: true,
+      imageUrl: null,
+      tcgType: "OnePiece",
+      printStatus: "in-print"
+    }
+  ]);
+
+  return {
+    createdSets: seeded.created,
+    updatedSets: seeded.updated,
+    createdCards: cards.created,
+    updatedCards: cards.updated
+  };
+}
+
+export async function runIngestOnePieceJob(input: IngestInput, options?: { jobId?: string }) {
+  const run = options?.jobId
+    ? { id: options.jobId }
+    : await jobsRepo.create({ type: "ingest-onepiece", status: "queued", requestPayloadJson: input });
 
   try {
     await jobsRepo.markRunning(run.id);
+
+    if (input.devSeed === true) {
+      const stats = await seedDevData();
+      await jobsRepo.finalize(run.id, { status: "completed", statsJson: stats, finishedAt: new Date() });
+      return { status: "completed" as const, stats };
+    }
 
     const rawSets = await fetchOnePieceSets(process.env.ONEPIECE_API_BASE_URL || "https://optcg-api.com");
     const normalizedSets = (rawSets as any[])

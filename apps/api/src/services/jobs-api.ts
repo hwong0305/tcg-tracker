@@ -1,7 +1,9 @@
 import { cardsRepo } from "../../../../packages/data/src/repos/cards-repo";
 import { jobsRepo } from "../../../../packages/data/src/repos/jobs-repo";
-import { setsRepo } from "../../../../packages/data/src/repos/sets-repo";
 import { resolveTargetsUnion } from "../../../../packages/jobs/src/resolve-targets";
+import { runIngestOnePieceJob } from "../../../../packages/jobs/src/ingest-onepiece";
+import { runRecomputeFlagsJob } from "../../../../packages/jobs/src/recompute-flags";
+import { runScrapePricesJob } from "../../../../packages/jobs/src/scrape-prices";
 
 async function normalizeScrapePayload(payload: { setIds?: string[]; cardIds?: string[] }) {
   const tracked = await cardsRepo.findTrackedTargets();
@@ -20,55 +22,11 @@ export const jobsApi = {
   async queueIngest(payload: any) {
     const run = await jobsRepo.create({ type: "ingest-onepiece", status: "queued", requestPayloadJson: payload });
 
-    if (payload?.devSeed === true) {
-      const seeded = await setsRepo.upsertMany([
-        {
-          tcgType: "OnePiece",
-          sourceSetId: "OP01",
-          setName: "Romance Dawn",
-          releaseDate: "2022-12-02",
-          currentBoxPrice: 210,
-          msrpPackPrice: 4.49,
-          isOutOfPrint: true
-        },
-        {
-          tcgType: "OnePiece",
-          sourceSetId: "OP02",
-          setName: "Paramount War",
-          releaseDate: "2023-03-10",
-          currentBoxPrice: 155,
-          msrpPackPrice: 4.49,
-          isOutOfPrint: false
-        }
-      ]);
-
-      const setIdBySource = new Map(seeded.rows.map((row) => [row.sourceSetId, row.id]));
-
-      await cardsRepo.upsertMany([
-        {
-          sourceCardId: "OP01-001",
-          setId: setIdBySource.get("OP01")!,
-          cardName: "Monkey D. Luffy",
-          rarity: "Manga Rare",
-          marketPrice: 800,
-          isChase: true,
-          imageUrl: null,
-          tcgType: "OnePiece",
-          printStatus: "out-of-print"
-        },
-        {
-          sourceCardId: "OP02-050",
-          setId: setIdBySource.get("OP02")!,
-          cardName: "Trafalgar Law",
-          rarity: "Alt Art",
-          marketPrice: 120,
-          isChase: true,
-          imageUrl: null,
-          tcgType: "OnePiece",
-          printStatus: "in-print"
-        }
-      ]);
-    }
+    queueMicrotask(() => {
+      void runIngestOnePieceJob(payload ?? {}, { jobId: run.id }).catch(() => {
+        // Job failure state is persisted by job runner.
+      });
+    });
 
     return run.id;
   },
@@ -81,11 +39,25 @@ export const jobsApi = {
       status: "queued",
       requestPayloadJson: normalized
     });
+
+    queueMicrotask(() => {
+      void runScrapePricesJob(normalized, { jobId: run.id }).catch(() => {
+        // Job failure state is persisted by job runner.
+      });
+    });
+
     return { jobId: run.id, targetCount: targets.length };
   },
 
   async queueRecompute(payload: any) {
     const run = await jobsRepo.create({ type: "recompute-flags", status: "queued", requestPayloadJson: payload });
+
+    queueMicrotask(() => {
+      void runRecomputeFlagsJob(payload ?? {}, { jobId: run.id }).catch(() => {
+        // Job failure state is persisted by job runner.
+      });
+    });
+
     return run.id;
   },
 

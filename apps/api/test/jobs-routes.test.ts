@@ -47,6 +47,26 @@ describe("API contracts", () => {
     expect(dashboard.cards.length).toBeGreaterThan(0);
   });
 
+  test("queued ingest job transitions to completed", async () => {
+    const create = await app.handle(
+      new Request("http://localhost/jobs/ingest/onepiece", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ devSeed: true })
+      })
+    );
+    const created = await create.json();
+
+    await Bun.sleep(20);
+
+    const statusRes = await app.handle(new Request(`http://localhost/jobs/${created.jobId}`));
+    const status = await statusRes.json();
+
+    expect(statusRes.status).toBe(200);
+    expect(status.status).toBe("completed");
+    expect(typeof status.finishedAt).toBe("string");
+  });
+
   test("POST /jobs/scrape/prices handles union+dedupe semantics", async () => {
     const res = await app.handle(
       new Request("http://localhost/jobs/scrape/prices", {

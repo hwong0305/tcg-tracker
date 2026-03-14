@@ -40,8 +40,10 @@ export function summarizeScrapeRun(stats: { totalTargets: number; succeeded: num
   return { status: "completed" as const };
 }
 
-export async function runScrapePricesJob(input: { setIds?: string[]; cardIds?: string[] }) {
-  const run = await jobsRepo.create({ type: "scrape-prices", status: "queued", requestPayloadJson: input });
+export async function runScrapePricesJob(input: { setIds?: string[]; cardIds?: string[] }, options?: { jobId?: string }) {
+  const run = options?.jobId
+    ? { id: options.jobId }
+    : await jobsRepo.create({ type: "scrape-prices", status: "queued", requestPayloadJson: input });
   try {
     await jobsRepo.markRunning(run.id);
 

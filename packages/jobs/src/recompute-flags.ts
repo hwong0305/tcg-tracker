@@ -1,4 +1,5 @@
 import { computeChaseFlags, computePrintStatus } from "../../core/src/index";
+import { jobsRepo } from "../../data/src/repos/jobs-repo";
 import { cardsRepo } from "../../data/src/repos/cards-repo";
 import { setsRepo } from "../../data/src/repos/sets-repo";
 
@@ -46,6 +47,35 @@ export async function recomputeFlags(setIds: string[], options?: { todayUtc?: st
       fixtureD_Chase: cardStatusByFixture.get("fixtureD") ?? false
     }
   };
+}
+
+export async function runRecomputeFlagsJob(
+  input: { setIds?: string[]; todayUtc?: string },
+  options?: { jobId?: string }
+) {
+  const run = options?.jobId
+    ? { id: options.jobId }
+    : await jobsRepo.create({ type: "recompute-flags", status: "queued", requestPayloadJson: input });
+
+  try {
+    await jobsRepo.markRunning(run.id);
+    const allSets = await setsRepo.findFiltered({});
+    const setIds = input.setIds ?? allSets.map((set) => set.id);
+    const result = await recomputeFlags(setIds, { todayUtc: input.todayUtc });
+    await jobsRepo.finalize(run.id, {
+      status: "completed",
+      statsJson: { setCount: setIds.length, assertions: result.assertions },
+      finishedAt: new Date()
+    });
+    return result;
+  } catch (error) {
+    await jobsRepo.finalize(run.id, {
+      status: "failed",
+      errorsJson: [{ message: error instanceof Error ? error.message : String(error) }],
+      finishedAt: new Date()
+    });
+    throw error;
+  }
 }
 
 if (import.meta.main) {
