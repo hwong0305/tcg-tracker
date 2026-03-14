@@ -50,7 +50,23 @@ export default function App() {
   if (error) return <div role="alert">{error}</div>;
 
   return (
-    <main>
+    <main className="app-shell">
+      <section className="dashboard-hero">
+        <p className="eyebrow">Collection Console</p>
+        <h1>CardTracker Dashboard</h1>
+        <p>Filter in-print releases, spot chase cards, and pivot between trading card segments quickly.</p>
+        <div className="hero-metrics">
+          <div>
+            <span className="metric-label">Visible Cards</span>
+            <strong>{filtered.length}</strong>
+          </div>
+          <div>
+            <span className="metric-label">Tracked Sets</span>
+            <strong>{data.sets.length}</strong>
+          </div>
+        </div>
+      </section>
+
       <FilterBar
         filters={filters}
         onChange={setFilters}

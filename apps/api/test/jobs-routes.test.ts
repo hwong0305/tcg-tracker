@@ -2,6 +2,21 @@ import { describe, expect, test } from "bun:test";
 import { app } from "../src/server";
 
 describe("API contracts", () => {
+  test("CORS preflight allows web client origin", async () => {
+    const res = await app.handle(
+      new Request("http://localhost/health", {
+        method: "OPTIONS",
+        headers: {
+          origin: "http://localhost:5173",
+          "access-control-request-method": "GET"
+        }
+      })
+    );
+
+    expect(res.status).not.toBe(404);
+    expect(res.headers.get("access-control-allow-origin")).toBe("http://localhost:5173");
+  });
+
   test("GET /health contract", async () => {
     const res = await app.handle(new Request("http://localhost/health"));
     const body = await res.json();

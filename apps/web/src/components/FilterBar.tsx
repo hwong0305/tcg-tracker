@@ -24,72 +24,78 @@ export function FilterBar({
   rarityOptions: string[];
 }) {
   return (
-    <div>
-      <label>
-        Print Status
-        <select
-          aria-label="Print Status"
-          value={filters.printStatus}
-          onChange={(e) => onChange({ ...filters, printStatus: e.target.value as FilterState["printStatus"] })}
-        >
+    <section className="filter-panel" aria-label="Dashboard filters">
+      <div className="filter-grid">
+        <label className="filter-field">
+          <span>Print Status</span>
+          <select
+            aria-label="Print Status"
+            value={filters.printStatus}
+            onChange={(e) => onChange({ ...filters, printStatus: e.target.value as FilterState["printStatus"] })}
+          >
           <option value="all">All</option>
-          <option value="in-print">In-Print</option>
-          <option value="out-of-print">Out-of-Print</option>
-        </select>
-      </label>
+            <option value="in-print">In-Print</option>
+            <option value="out-of-print">Out-of-Print</option>
+          </select>
+        </label>
 
-      <label>
-        TCG Type
-        <select aria-label="TCG Type" value={filters.tcgType} onChange={(e) => onChange({ ...filters, tcgType: e.target.value })}>
-          <option value="all">All</option>
-          {tcgOptions.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
-      </label>
+        <label className="filter-field">
+          <span>TCG Type</span>
+          <select aria-label="TCG Type" value={filters.tcgType} onChange={(e) => onChange({ ...filters, tcgType: e.target.value })}>
+            <option value="all">All</option>
+            {tcgOptions.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        </label>
 
-      <label>
-        Set
-        <select aria-label="Set" value={filters.set} onChange={(e) => onChange({ ...filters, set: e.target.value })}>
-          <option value="all">All</option>
-          {setOptions.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
-      </label>
+        <label className="filter-field">
+          <span>Set</span>
+          <select aria-label="Set" value={filters.set} onChange={(e) => onChange({ ...filters, set: e.target.value })}>
+            <option value="all">All</option>
+            {setOptions.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        </label>
 
-      <label>
-        Rarity
-        <select aria-label="Rarity" value={filters.rarity} onChange={(e) => onChange({ ...filters, rarity: e.target.value })}>
-          <option value="all">All</option>
-          {rarityOptions.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
-      </label>
+        <label className="filter-field">
+          <span>Rarity</span>
+          <select aria-label="Rarity" value={filters.rarity} onChange={(e) => onChange({ ...filters, rarity: e.target.value })}>
+            <option value="all">All</option>
+            {rarityOptions.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
-      <label>
-        Chase Only
-        <input
-          aria-label="Chase Only"
-          type="checkbox"
-          checked={filters.chaseOnly}
-          onChange={(e) => onChange({ ...filters, chaseOnly: e.target.checked })}
-        />
-      </label>
+      <div className="filter-actions">
+        <label className="chase-toggle">
+          <input
+            aria-label="Chase Only"
+            type="checkbox"
+            checked={filters.chaseOnly}
+            onChange={(e) => onChange({ ...filters, chaseOnly: e.target.checked })}
+          />
+          <span>Chase Only</span>
+        </label>
 
-      <button type="button" onClick={() => onPreset("store-hunter")}>
-        Store Hunter
-      </button>
-      <button type="button" onClick={() => onPreset("vault")}>
-        Vault
-      </button>
-    </div>
+        <div className="preset-buttons">
+          <button type="button" onClick={() => onPreset("store-hunter")}>
+            Store Hunter
+          </button>
+          <button type="button" onClick={() => onPreset("vault")}>
+            Vault
+          </button>
+        </div>
+      </div>
+    </section>
   );
 }

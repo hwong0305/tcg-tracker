@@ -14,6 +14,7 @@
     "jobs:recompute": "bun run packages/jobs/src/recompute-flags.ts"
   },
   "dependencies": {
+    "@elysiajs/cors": "^1.4.1",
     "drizzle-orm": "^0.44.6",
     "elysia": "^1.4.16",
     "pg": "^8.16.3",

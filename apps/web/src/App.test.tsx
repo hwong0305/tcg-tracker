@@ -57,3 +57,11 @@ test("chase cards are highlighted and chaseOnly narrows list", async () => {
   fireEvent.click(screen.getByLabelText("Chase Only"));
   expect(screen.queryByTestId("non-chase-row")).toBeNull();
 });
+
+test("renders styled dashboard shell", async () => {
+  render(<App />);
+  await screen.findByText("A");
+  expect(document.querySelector(".app-shell")).toBeInTheDocument();
+  expect(document.querySelector(".filter-panel")).toBeInTheDocument();
+  expect(document.querySelector(".card-list")).toBeInTheDocument();
+});

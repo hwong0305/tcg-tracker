@@ -40,6 +40,12 @@ bun test
 bun --cwd apps/web run test
 ```
 
+## Frontend/API Connectivity (Dev)
+
+- Preferred local setup: run `bun run dev:api` and `bun run dev:web` together, and keep `VITE_API_BASE_URL` unset/empty so Vite proxy forwards `/dashboard` and `/jobs` to `http://localhost:3000`.
+- If you set `VITE_API_BASE_URL` to a full API origin (for example `http://localhost:3000`), browser CORS applies and API must allow your web origin via `CORS_ORIGINS` (for example `http://localhost:5173,http://127.0.0.1:5173`).
+- `CORS_ORIGINS` is configured in `.env` as a comma-separated allowlist.
+
 ## CI Checks
 
 GitHub Actions runs:
