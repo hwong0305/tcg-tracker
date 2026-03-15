@@ -179,7 +179,8 @@ body {
   min-width: 0;
 }
 
-.filter-field select {
+.filter-field select,
+.filter-field input {
   border-radius: 10px;
   border: 1px solid var(--surface-border);
   padding: 0.55rem 0.7rem;

@@ -6,6 +6,7 @@ export type FilterState = {
   set: string;
   rarity: string;
   chaseOnly: boolean;
+  search: string;
 };
 
 type SetOption = { id: string; name: string };
@@ -43,6 +44,17 @@ export function FilterBar({
   return (
     <section className="filter-panel" aria-label="Dashboard filters">
       <div className="filter-grid">
+        <label className="filter-field">
+          <span>Search cards</span>
+          <input
+            aria-label="Search cards"
+            type="text"
+            placeholder="Name or ID (e.g. Luffy or OP01-001)"
+            value={filters.search}
+            onChange={(e) => onChange({ ...filters, search: e.target.value })}
+          />
+        </label>
+
         <label className="filter-field">
           <span>Print Status</span>
           <select
