@@ -7,6 +7,7 @@ export type FilterState = {
   rarity: string;
   chaseOnly: boolean;
   search: string;
+  sort: "name-asc" | "name-desc";
 };
 
 type SetOption = { id: string; name: string };
@@ -58,6 +59,19 @@ export function FilterBar({
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
           />
+        </label>
+
+        <label className="filter-field">
+          <span>Sort</span>
+          <select
+            className="filter-control"
+            aria-label="Sort"
+            value={filters.sort}
+            onChange={(e) => onChange((prev) => ({ ...prev, sort: e.target.value as FilterState["sort"] }))}
+          >
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+          </select>
         </label>
 
         <label className="filter-field">

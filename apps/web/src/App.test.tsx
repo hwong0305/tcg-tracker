@@ -309,3 +309,15 @@ test("card detail image uses lazy loading", async () => {
   const modalImage = document.querySelector(".modal-card-image");
   expect(modalImage).toHaveAttribute("loading", "lazy");
 });
+
+test("can sort visible cards by name descending", async () => {
+  render(<App />);
+  await screen.findByText("A");
+
+  fireEvent.change(screen.getByLabelText("Sort"), { target: { value: "name-desc" } });
+  await waitFor(() => {
+    const rows = screen.getAllByRole("listitem");
+    expect(rows[0]).toHaveTextContent("B");
+    expect(rows[1]).toHaveTextContent("A");
+  });
+});

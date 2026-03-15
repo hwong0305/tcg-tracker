@@ -10,12 +10,14 @@ const initialFilters: FilterState = {
   set: "all",
   rarity: "all",
   chaseOnly: false,
-  search: ""
+  search: "",
+  sort: "name-asc"
 };
 
 const SEARCH_DEBOUNCE_MS = 250;
 
 const PRINT_STATUS_VALUES: FilterState["printStatus"][] = ["all", "in-print", "out-of-print"];
+const SORT_VALUES: FilterState["sort"][] = ["name-asc", "name-desc"];
 
 function getLastParam(params: URLSearchParams, key: string): string | null {
   const values = params.getAll(key);
@@ -26,6 +28,7 @@ function getLastParam(params: URLSearchParams, key: string): string | null {
 function parseFiltersFromQuery(query: string): FilterState {
   const params = new URLSearchParams(query);
   const printStatusParam = getLastParam(params, "printStatus");
+  const sortParam = getLastParam(params, "sort");
   const printStatus = PRINT_STATUS_VALUES.includes(printStatusParam as FilterState["printStatus"])
     ? (printStatusParam as FilterState["printStatus"])
     : initialFilters.printStatus;
@@ -36,7 +39,8 @@ function parseFiltersFromQuery(query: string): FilterState {
     set: getLastParam(params, "set") ?? initialFilters.set,
     rarity: getLastParam(params, "rarity") ?? initialFilters.rarity,
     chaseOnly: getLastParam(params, "chaseOnly") === "true",
-    search: getLastParam(params, "search") ?? initialFilters.search
+    search: getLastParam(params, "search") ?? initialFilters.search,
+    sort: SORT_VALUES.includes(sortParam as FilterState["sort"]) ? (sortParam as FilterState["sort"]) : initialFilters.sort
   };
 }
 
@@ -51,6 +55,7 @@ function serializeFiltersToQuery(filters: FilterState): string {
 
   const trimmedSearch = filters.search.trim();
   if (trimmedSearch.length > 0) params.set("search", trimmedSearch);
+  if (filters.sort !== initialFilters.sort) params.set("sort", filters.sort);
 
   return params.toString();
 }
@@ -153,6 +158,15 @@ export default function App() {
     });
   }, [data, filters]);
 
+  const sorted = useMemo(() => {
+    const next = [...filtered];
+    next.sort((a, b) => {
+      const byName = a.cardName.localeCompare(b.cardName);
+      return filters.sort === "name-desc" ? -byName : byName;
+    });
+    return next;
+  }, [filtered, filters.sort]);
+
   const onPreset = (preset: "store-hunter" | "vault" | "all") => {
     if (preset === "all") {
       setFilters(initialFilters);
@@ -201,7 +215,7 @@ export default function App() {
         setOptions={setOptions}
         rarityOptions={rarityOptions}
       />
-      <SetList cards={filtered} />
+      <SetList cards={sorted} />
     </main>
   );
 }
