@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DashboardCard } from "../lib/api";
 import { formatRarity } from "./FilterBar";
+
+const CARDS_PAGE_SIZE = 60;
 
 function formatPrice(price: number | null): string {
   if (price == null) return "N/A";
@@ -43,8 +45,43 @@ function CardDetailModal({ card, onClose }: { card: DashboardCard; onClose: () =
   );
 }
 
-export function SetList({ cards }: { cards: DashboardCard[] }) {
+export const SetList = React.memo(function SetList({ cards }: { cards: DashboardCard[] }) {
   const [selectedCard, setSelectedCard] = useState<DashboardCard | null>(null);
+  const [visibleCount, setVisibleCount] = useState(CARDS_PAGE_SIZE);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setVisibleCount(CARDS_PAGE_SIZE);
+  }, [cards]);
+
+  useEffect(() => {
+    if (selectedCard == null) return;
+    if (cards.some((card) => card.id === selectedCard.id)) return;
+    setSelectedCard(null);
+  }, [cards, selectedCard]);
+
+  const loadMore = useCallback(() => {
+    setVisibleCount((prev) => Math.min(prev + CARDS_PAGE_SIZE, cards.length));
+  }, [cards.length]);
+
+  const hasMore = visibleCount < cards.length;
+
+  useEffect(() => {
+    if (!hasMore) return;
+    if (typeof window.IntersectionObserver === "undefined") return;
+    if (sentinelRef.current == null) return;
+
+    const observer = new window.IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        loadMore();
+      }
+    });
+
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, loadMore]);
+
+  const visibleCards = useMemo(() => cards.slice(0, visibleCount), [cards, visibleCount]);
 
   if (cards.length === 0) {
     return <p className="empty-state">No cards match the current filter combination.</p>;
@@ -54,7 +91,7 @@ export function SetList({ cards }: { cards: DashboardCard[] }) {
     <>
       {selectedCard && <CardDetailModal card={selectedCard} onClose={() => setSelectedCard(null)} />}
       <ul className="card-list">
-        {cards.map((card) => (
+        {visibleCards.map((card) => (
           <li key={card.id} className="card-row" data-testid={card.isChase ? "chase-row" : "non-chase-row"} onClick={() => setSelectedCard(card)}>
             <div className="card-media">
               {card.imageUrl ? (
@@ -80,6 +117,14 @@ export function SetList({ cards }: { cards: DashboardCard[] }) {
           </li>
         ))}
       </ul>
+      {hasMore ? (
+        <div className="load-more-wrap">
+          <button type="button" className="load-more-button" onClick={loadMore}>
+            Load more cards
+          </button>
+          <div ref={sentinelRef} className="load-more-sentinel" aria-hidden="true" />
+        </div>
+      ) : null}
     </>
   );
-}
+});

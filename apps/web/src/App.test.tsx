@@ -367,3 +367,28 @@ test("can sort visible cards by set ascending", async () => {
     expect(rows[1]).toHaveTextContent("A");
   });
 });
+
+test("renders cards in batches and allows loading more", async () => {
+  const manyCards = Array.from({ length: 75 }, (_, index) => {
+    const name = `Card ${String(index).padStart(3, "0")}`;
+    return {
+      ...fixture.cards[0],
+      id: `${index + 1}`,
+      sourceCardId: `OP01-${String(index + 1).padStart(3, "0")}`,
+      cardName: name,
+      marketPrice: index,
+      rarity: index % 2 === 0 ? "R" : "SR",
+      setId: index % 2 === 0 ? "OP01" : "OP02",
+      setName: index % 2 === 0 ? "Romance Dawn" : "Paramount War"
+    };
+  });
+
+  vi.mocked(api.fetchDashboard).mockResolvedValueOnce({ ...fixture, cards: manyCards } as any);
+
+  render(<App />);
+  await screen.findByText("Card 000");
+  expect(screen.queryByText("Card 060")).toBeNull();
+
+  fireEvent.click(screen.getByRole("button", { name: "Load more cards" }));
+  await screen.findByText("Card 060");
+});
