@@ -28,6 +28,8 @@ export function formatRarity(rarity: string): string {
 
 export function FilterBar({
   filters,
+  searchValue,
+  onSearchChange,
   onChange,
   onPreset,
   tcgOptions,
@@ -35,7 +37,9 @@ export function FilterBar({
   rarityOptions
 }: {
   filters: FilterState;
-  onChange: (next: FilterState) => void;
+  searchValue: string;
+  onSearchChange: (value: string) => void;
+  onChange: React.Dispatch<React.SetStateAction<FilterState>>;
   onPreset: (preset: "store-hunter" | "vault" | "all") => void;
   tcgOptions: string[];
   setOptions: SetOption[];
@@ -50,8 +54,8 @@ export function FilterBar({
             aria-label="Search cards"
             type="text"
             placeholder="Name or ID (e.g. Luffy or OP01-001)"
-            value={filters.search}
-            onChange={(e) => onChange({ ...filters, search: e.target.value })}
+            value={searchValue}
+            onChange={(e) => onSearchChange(e.target.value)}
           />
         </label>
 
@@ -60,7 +64,9 @@ export function FilterBar({
           <select
             aria-label="Print Status"
             value={filters.printStatus}
-            onChange={(e) => onChange({ ...filters, printStatus: e.target.value as FilterState["printStatus"] })}
+            onChange={(e) =>
+              onChange((prev) => ({ ...prev, printStatus: e.target.value as FilterState["printStatus"] }))
+            }
           >
           <option value="all">All</option>
             <option value="in-print">In-Print</option>
@@ -70,7 +76,11 @@ export function FilterBar({
 
         <label className="filter-field">
           <span>TCG Type</span>
-          <select aria-label="TCG Type" value={filters.tcgType} onChange={(e) => onChange({ ...filters, tcgType: e.target.value })}>
+          <select
+            aria-label="TCG Type"
+            value={filters.tcgType}
+            onChange={(e) => onChange((prev) => ({ ...prev, tcgType: e.target.value }))}
+          >
             <option value="all">All</option>
             {tcgOptions.map((opt) => (
               <option key={opt} value={opt}>
@@ -82,7 +92,7 @@ export function FilterBar({
 
         <label className="filter-field">
           <span>Set</span>
-          <select aria-label="Set" value={filters.set} onChange={(e) => onChange({ ...filters, set: e.target.value })}>
+          <select aria-label="Set" value={filters.set} onChange={(e) => onChange((prev) => ({ ...prev, set: e.target.value }))}>
             <option value="all">All</option>
             {setOptions.map((opt) => (
               <option key={opt.id} value={opt.id}>
@@ -94,7 +104,11 @@ export function FilterBar({
 
         <label className="filter-field">
           <span>Rarity</span>
-          <select aria-label="Rarity" value={filters.rarity} onChange={(e) => onChange({ ...filters, rarity: e.target.value })}>
+          <select
+            aria-label="Rarity"
+            value={filters.rarity}
+            onChange={(e) => onChange((prev) => ({ ...prev, rarity: e.target.value }))}
+          >
             <option value="all">All</option>
             {rarityOptions.map((opt) => (
               <option key={opt} value={opt}>
@@ -111,7 +125,7 @@ export function FilterBar({
             aria-label="Chase Only"
             type="checkbox"
             checked={filters.chaseOnly}
-            onChange={(e) => onChange({ ...filters, chaseOnly: e.target.checked })}
+            onChange={(e) => onChange((prev) => ({ ...prev, chaseOnly: e.target.checked }))}
           />
           <span>Chase Only</span>
         </label>

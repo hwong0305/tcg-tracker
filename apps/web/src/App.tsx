@@ -13,6 +13,8 @@ const initialFilters: FilterState = {
   search: ""
 };
 
+const SEARCH_DEBOUNCE_MS = 250;
+
 const PRINT_STATUS_VALUES: FilterState["printStatus"][] = ["all", "in-print", "out-of-print"];
 
 function getLastParam(params: URLSearchParams, key: string): string | null {
@@ -54,8 +56,10 @@ function serializeFiltersToQuery(filters: FilterState): string {
 }
 
 export default function App() {
+  const initialFromQuery = useMemo(() => parseFiltersFromQuery(window.location.search), []);
   const [data, setData] = useState<DashboardData>({ sets: [], cards: [] });
-  const [filters, setFilters] = useState<FilterState>(() => parseFiltersFromQuery(window.location.search));
+  const [filters, setFilters] = useState<FilterState>(initialFromQuery);
+  const [searchValue, setSearchValue] = useState(initialFromQuery.search);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const hydratedFromUrl = useRef(false);
@@ -70,6 +74,14 @@ export default function App() {
   useEffect(() => {
     hydratedFromUrl.current = true;
   }, []);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setFilters((prev) => (prev.search === searchValue ? prev : { ...prev, search: searchValue }));
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timeout);
+  }, [searchValue]);
 
   const tcgOptions = useMemo(() => Array.from(new Set(data.cards.map((c) => c.tcgType))), [data.cards]);
   const setOptions = useMemo(
@@ -144,6 +156,7 @@ export default function App() {
   const onPreset = (preset: "store-hunter" | "vault" | "all") => {
     if (preset === "all") {
       setFilters(initialFilters);
+      setSearchValue(initialFilters.search);
     } else {
       setFilters((prev) => ({
         ...prev,
@@ -180,6 +193,8 @@ export default function App() {
 
       <FilterBar
         filters={filters}
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
         onChange={setFilters}
         onPreset={onPreset}
         tcgOptions={tcgOptions}

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import { afterEach, beforeEach, expect, test } from "vitest";
 import App from "./App";
@@ -75,23 +75,39 @@ test("search filters cards by card name case-insensitively", async () => {
   render(<App />);
   await screen.findByText("Alpha");
   fireEvent.change(screen.getByLabelText("Search cards"), { target: { value: "LPH" } });
+  await waitFor(() => {
+    expect(screen.queryByText("B")).toBeNull();
+  });
   expect(screen.getByText("Alpha")).toBeInTheDocument();
-  expect(screen.queryByText("B")).toBeNull();
 });
 
 test("search filters cards by source id case-insensitively", async () => {
   render(<App />);
   await screen.findByText("A");
   fireEvent.change(screen.getByLabelText("Search cards"), { target: { value: "op02" } });
+  await waitFor(() => {
+    expect(screen.queryByText("A")).toBeNull();
+  });
   expect(screen.getByText("B")).toBeInTheDocument();
-  expect(screen.queryByText("A")).toBeNull();
 });
 
 test("whitespace-only search behaves like empty search", async () => {
   render(<App />);
   await screen.findByText("A");
   fireEvent.change(screen.getByLabelText("Search cards"), { target: { value: "   " } });
+  await waitFor(() => {
+    expect(screen.getByText("A")).toBeInTheDocument();
+  });
+  expect(screen.getByText("B")).toBeInTheDocument();
+});
+
+test("search applies after debounce interval", async () => {
+  render(<App />);
+  await screen.findByText("A");
+  fireEvent.change(screen.getByLabelText("Search cards"), { target: { value: "op02" } });
   expect(screen.getByText("A")).toBeInTheDocument();
+  expect(screen.getByText("B")).toBeInTheDocument();
+  await waitFor(() => expect(screen.queryByText("A")).toBeNull());
   expect(screen.getByText("B")).toBeInTheDocument();
 });
 
@@ -115,6 +131,19 @@ test("chase cards are highlighted and chaseOnly narrows list", async () => {
   await screen.findByText("A");
   expect(screen.getAllByTestId("chase-badge").length).toBeGreaterThan(0);
   fireEvent.click(screen.getByLabelText("Chase Only"));
+  expect(screen.queryByTestId("non-chase-row")).toBeNull();
+});
+
+test("chase-only remains enabled while typing search in same render tick", async () => {
+  render(<App />);
+  await screen.findByText("A");
+  const chaseOnly = screen.getByLabelText("Chase Only");
+  const search = screen.getByLabelText("Search cards");
+  act(() => {
+    fireEvent.click(chaseOnly);
+    fireEvent.change(search, { target: { value: "OP01" } });
+  });
+  expect(chaseOnly).toBeChecked();
   expect(screen.queryByTestId("non-chase-row")).toBeNull();
 });
 
