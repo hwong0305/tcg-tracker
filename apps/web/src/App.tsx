@@ -17,7 +17,16 @@ const initialFilters: FilterState = {
 const SEARCH_DEBOUNCE_MS = 250;
 
 const PRINT_STATUS_VALUES: FilterState["printStatus"][] = ["all", "in-print", "out-of-print"];
-const SORT_VALUES: FilterState["sort"][] = ["name-asc", "name-desc"];
+const SORT_VALUES: FilterState["sort"][] = [
+  "name-asc",
+  "name-desc",
+  "rarity-asc",
+  "rarity-desc",
+  "price-asc",
+  "price-desc",
+  "set-asc",
+  "set-desc"
+];
 
 function getLastParam(params: URLSearchParams, key: string): string | null {
   const values = params.getAll(key);
@@ -162,7 +171,31 @@ export default function App() {
     const next = [...filtered];
     next.sort((a, b) => {
       const byName = a.cardName.localeCompare(b.cardName);
-      return filters.sort === "name-desc" ? -byName : byName;
+
+      if (filters.sort === "name-asc") return byName;
+      if (filters.sort === "name-desc") return -byName;
+
+      if (filters.sort === "rarity-asc" || filters.sort === "rarity-desc") {
+        const byRarity = (a.rarity ?? "").localeCompare(b.rarity ?? "");
+        if (byRarity !== 0) return filters.sort === "rarity-desc" ? -byRarity : byRarity;
+        return byName;
+      }
+
+      if (filters.sort === "set-asc" || filters.sort === "set-desc") {
+        const bySet = a.setName.localeCompare(b.setName);
+        if (bySet !== 0) return filters.sort === "set-desc" ? -bySet : bySet;
+        return byName;
+      }
+
+      const aPrice = a.marketPrice;
+      const bPrice = b.marketPrice;
+      if (aPrice == null && bPrice == null) return byName;
+      if (aPrice == null) return 1;
+      if (bPrice == null) return -1;
+
+      const byPrice = aPrice - bPrice;
+      if (byPrice !== 0) return filters.sort === "price-desc" ? -byPrice : byPrice;
+      return byName;
     });
     return next;
   }, [filtered, filters.sort]);

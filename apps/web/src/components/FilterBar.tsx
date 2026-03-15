@@ -7,7 +7,15 @@ export type FilterState = {
   rarity: string;
   chaseOnly: boolean;
   search: string;
-  sort: "name-asc" | "name-desc";
+  sort:
+    | "name-asc"
+    | "name-desc"
+    | "rarity-asc"
+    | "rarity-desc"
+    | "price-asc"
+    | "price-desc"
+    | "set-asc"
+    | "set-desc";
 };
 
 type SetOption = { id: string; name: string };
@@ -71,6 +79,12 @@ export function FilterBar({
           >
             <option value="name-asc">Name (A-Z)</option>
             <option value="name-desc">Name (Z-A)</option>
+            <option value="rarity-asc">Rarity (A-Z)</option>
+            <option value="rarity-desc">Rarity (Z-A)</option>
+            <option value="price-asc">Price (Low-High)</option>
+            <option value="price-desc">Price (High-Low)</option>
+            <option value="set-asc">Set (A-Z)</option>
+            <option value="set-desc">Set (Z-A)</option>
           </select>
         </label>
 

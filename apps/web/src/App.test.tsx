@@ -321,3 +321,49 @@ test("can sort visible cards by name descending", async () => {
     expect(rows[1]).toHaveTextContent("A");
   });
 });
+
+test("can sort visible cards by rarity descending", async () => {
+  render(<App />);
+  await screen.findByText("A");
+
+  fireEvent.change(screen.getByLabelText("Sort"), { target: { value: "rarity-desc" } });
+  await waitFor(() => {
+    const rows = screen.getAllByRole("listitem");
+    expect(rows[0]).toHaveTextContent("B");
+    expect(rows[1]).toHaveTextContent("A");
+  });
+});
+
+test("can sort visible cards by price descending with missing prices last", async () => {
+  vi.mocked(api.fetchDashboard).mockResolvedValueOnce({
+    ...fixture,
+    cards: [
+      { ...fixture.cards[0], cardName: "A", marketPrice: 2.55 },
+      { ...fixture.cards[1], id: "2", cardName: "B", sourceCardId: "OP02-050", marketPrice: 5.0 },
+      { ...fixture.cards[1], id: "3", cardName: "C", sourceCardId: "OP02-051", marketPrice: null }
+    ]
+  } as any);
+
+  render(<App />);
+  await screen.findByText("A");
+
+  fireEvent.change(screen.getByLabelText("Sort"), { target: { value: "price-desc" } });
+  await waitFor(() => {
+    const rows = screen.getAllByRole("listitem");
+    expect(rows[0]).toHaveTextContent("B");
+    expect(rows[1]).toHaveTextContent("A");
+    expect(rows[2]).toHaveTextContent("C");
+  });
+});
+
+test("can sort visible cards by set ascending", async () => {
+  render(<App />);
+  await screen.findByText("A");
+
+  fireEvent.change(screen.getByLabelText("Sort"), { target: { value: "set-asc" } });
+  await waitFor(() => {
+    const rows = screen.getAllByRole("listitem");
+    expect(rows[0]).toHaveTextContent("B");
+    expect(rows[1]).toHaveTextContent("A");
+  });
+});
