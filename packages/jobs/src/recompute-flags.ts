@@ -78,6 +78,10 @@ export async function runRecomputeFlagsJob(
   }
 }
 
+export async function runRecomputeFlagsCli(input: { todayUtc?: string } = {}) {
+  return runRecomputeFlagsJob({ todayUtc: input.todayUtc });
+}
+
 if (import.meta.main) {
-  await recomputeFlags([]);
+  await runRecomputeFlagsCli();
 }

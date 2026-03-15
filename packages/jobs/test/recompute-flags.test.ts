@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { cardsRepo } from "../../data/src/repos/cards-repo";
 import { setsRepo } from "../../data/src/repos/sets-repo";
-import { recomputeFlags } from "../src/recompute-flags";
+import { recomputeFlags, runRecomputeFlagsCli } from "../src/recompute-flags";
 
 test("fixture A/B/C/D recompute outcomes", async () => {
   const setFixtureId = "11111111-1111-4111-8111-111111111111";
@@ -64,4 +64,40 @@ test("fixture A/B/C/D recompute outcomes", async () => {
   expect(result.assertions.fixtureB_OOP).toBe(true);
   expect(result.assertions.fixtureC_Chase).toBe(true);
   expect(result.assertions.fixtureD_Chase).toBe(true);
+});
+
+test("CLI recompute runs against all sets by default", async () => {
+  const setId = "55555555-5555-4555-8555-555555555555";
+
+  await setsRepo.seed([
+    {
+      id: setId,
+      tcgType: "OnePiece",
+      sourceSetId: "OP-CLI",
+      setName: "CLI Set",
+      releaseDate: "2020-01-01",
+      currentBoxPrice: 120,
+      msrpPackPrice: 4.49,
+      isOutOfPrint: false
+    }
+  ]);
+
+  await cardsRepo.seed([
+    {
+      id: "66666666-6666-4666-8666-666666666666",
+      sourceCardId: "OP-CLI-001",
+      setId,
+      cardName: "CLI Chase",
+      rarity: "Manga Rare",
+      marketPrice: null,
+      msrpPackPrice: 4.49,
+      isChase: false,
+      imageUrl: null
+    }
+  ]);
+
+  await runRecomputeFlagsCli({ todayUtc: "2026-03-13" });
+
+  const chaseOnly = await cardsRepo.findFiltered({ setId, chaseOnly: true });
+  expect(chaseOnly.length).toBe(1);
 });
