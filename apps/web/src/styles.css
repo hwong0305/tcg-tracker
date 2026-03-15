@@ -179,13 +179,14 @@ body {
   min-width: 0;
 }
 
-.filter-field select,
-.filter-field input {
+.filter-control {
   border-radius: 10px;
   border: 1px solid var(--surface-border);
   padding: 0.55rem 0.7rem;
   background: var(--select-bg);
   color: var(--text-primary);
+  font: inherit;
+  line-height: 1.2;
   min-width: 100%;
   width: 100%;
 }

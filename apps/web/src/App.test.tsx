@@ -279,3 +279,33 @@ test("query sync preserves hash fragments", async () => {
   await waitFor(() => expect(window.location.search).toBe("?search=OP02"));
   expect(window.location.hash).toBe("#cards");
 });
+
+test("search input uses the shared filter control styling", async () => {
+  render(<App />);
+  await screen.findByLabelText("Search cards");
+
+  expect(screen.getByLabelText("Search cards")).toHaveClass("filter-control");
+  expect(screen.getByLabelText("Print Status")).toHaveClass("filter-control");
+});
+
+test("pressing Escape closes card detail modal", async () => {
+  render(<App />);
+  await screen.findByText("A");
+
+  fireEvent.click(screen.getByText("A"));
+  expect(screen.getByText("Card ID: OP01-001")).toBeInTheDocument();
+
+  fireEvent.keyDown(window, { key: "Escape" });
+  await waitFor(() => {
+    expect(screen.queryByText("Card ID: OP01-001")).toBeNull();
+  });
+});
+
+test("card detail image uses lazy loading", async () => {
+  render(<App />);
+  await screen.findByText("A");
+
+  fireEvent.click(screen.getByText("A"));
+  const modalImage = document.querySelector(".modal-card-image");
+  expect(modalImage).toHaveAttribute("loading", "lazy");
+});

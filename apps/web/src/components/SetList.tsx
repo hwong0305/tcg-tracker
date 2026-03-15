@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { DashboardCard } from "../lib/api";
 import { formatRarity } from "./FilterBar";
 
@@ -8,13 +8,24 @@ function formatPrice(price: number | null): string {
 }
 
 function CardDetailModal({ card, onClose }: { card: DashboardCard; onClose: () => void }) {
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose}>×</button>
         <div className="modal-card">
           {card.imageUrl && (
-            <img className="modal-card-image" src={card.imageUrl} alt={card.cardName} />
+            <img className="modal-card-image" src={card.imageUrl} alt={card.cardName} loading="lazy" decoding="async" />
           )}
           <div className="modal-card-info">
             <h2>{card.cardName}</h2>
